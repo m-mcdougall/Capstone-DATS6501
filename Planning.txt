@@ -1,0 +1,43 @@
+
+Option 1: Hotel Information Business
+Purpose: Find factors that have the most influence over hotel guest experiences. These elements are the most critical for hotels to focus on optimizing in order to ensure good experiences and return customers.
+Dataset: Custom Scraped from hotel websites
+Plan:
+Create a script that scrapes hotel reviews for a given area - maybe by city or radius from a given address?
+
+Find common factors that contribute to positive and negative reviews (eg, free wifi common in positive, bedbugs in negative)
+For individual hotels, chart common positive and negative factors mentioned in reviews
+For area also look for city-wide trends, such as proximity to local attractions, and possible regional correlations
+For Overall look at correlations between star ratings for the hotel and different factors - what distinguishes a high-caliber hotel from the rest?
+
+Can investigate impacts of specific words on review - eg, bedbugs probably have a much larger impact than rude staff
+  -statistics
+
+Pros:
+Can store review information in SQL Database
+Can integrate modeling and statistics
+NLP
+Scraping
+
+Cons:
+Not working with R, would need to do an additional project
+Not Biotech or health
+Need to scrape potentially multiple websites
+
+------------
+
+Option 2: Skin cancer image classifier>
+Purpose: An image classifier trained on images of skin cancer, that you could then take photos of your own blemishes and it identifies them and tells you to go to a dermatologist
+Dataset: Would need to find one
+Plan:
+
+Pros: Very cool - similar enough to previous projects that I have a good codebase, but distinct enough that it would be enough
+highly applicable
+Very easy to integrate webdesign and cloud computing
+NIH relatable
+
+Cons:
+Not working with R or SQL, would need to do an additional project
+Possibly too close to previous
+Need to find dataset https://www.cancerimagingarchive.net/collections/
+Not a lot of statistics to integrate
