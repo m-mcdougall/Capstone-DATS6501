@@ -73,15 +73,6 @@ def gen_property_pages(soup_in):
         
     return output
 
-#%%
-
-
-cat = [1]
-
-for i in cat:
-    if i ==1:
-        cat.extend([2,3])
-    print(i)
 
 
 #%%
@@ -95,73 +86,141 @@ page_url = ['-']
 
 
 links = []
-skip_sequential = 100
+skip_sequential = 0
 
 for pagecount in page_url:
     
     # Once we get to the non-reviewed hotels, stop scraping.
-    if skip_sequential >5:
-        continue
+    if skip_sequential <5:
+        
+        
+        url= 'https://www.tripadvisor.com/Hotels-g28970'+pagecount+'Washington_DC_District_of_Columbia-Hotels.html'
+        
+        print('\n\n'+url)
+        
     
-    url= 'https://www.tripadvisor.com/Hotels-g28970'+pagecount+'Washington_DC_District_of_Columbia-Hotels.html'
-    
-    print('\n\n'+url)
-    
+        
+        #Download the page info
+        page = requests.get(url, headers=headers)
+        soup = BeautifulSoup(page.content, 'html.parser')
+        
+        # Parse the number of properties, and add the 
+        # coorresponding number of pages to the search
+        # NOTE: Only do this on the first page, or it will continue infinitely
+        if pagecount == '-':
+            page_url.extend(gen_property_pages(soup))
+        
+        
+        #Extract only the hotel listings div
+        results = soup.find("div", {"class":"bodycon_main"})
+        
+        
+        #Collect all hotel listing divs
+        listings_all = results.find_all("div", {"class":"meta_listing ui_columns large_thumbnail_mobile"})
+        skip_sequential=0
+        
+        for listing in listings_all:
+            
+            # Only collect links for hotels with sufficient reviews
+            
+        
+            # First, check review count
+            try:
+                review_raw = listing.find("a", {"class":"review_count"}).text
+                review_raw = review_raw[0:review_raw.find(' review')]
+                review_raw = int(review_raw.replace(',',''))
+            except:
+                print('ERROR: Skipping')
+                print(listing)
+                review_raw = 0
+        
+            # Filter for review count
+            if review_raw < 100:
+                print(f'Insufficient review count: {review_raw}. Skipping...')
+                skip_sequential +=1 
+            else:
+                print(f'Sufficient reviews: {review_raw}.')
+            
+                #Collect the hotel's url
+                listing_link = listing.find("div", {"class":"listing_title"})
+                links.append(listing_link.find("a")['href'])
+                skip_sequential += -1
+            
+        print('Got the page. Sleeping...')
+        time.sleep(10)
 
-    
-    #Download the page info
-    page = requests.get(url, headers=headers)
-    soup = BeautifulSoup(page.content, 'html.parser')
-    
-    # Parse the number of properties, and add the 
-    # coorresponding number of pages to the search
-    # NOTE: Only do this on the first page, or it will continue infinitely
-    if pagecount == '-':
-        page_url.extend(gen_property_pages(soup))
-    
-    
-    #Extract only the hotel listings div
-    results = soup.find("div", {"id":"taplc_hsx_hotel_list_lite_dusty_hotels_combined_sponsored_0"})
-    
-    
-    #Collect all hotel listing divs
-    listings_all = results.find_all("div", {"class":"meta_listing ui_columns large_thumbnail_mobile"})
-    
-    
-    for listing in listings_all:
-    
-        # Only collect links for hotels with sufficient reviews
-    
-    
-        # First, check review count
-        try:
-            review_raw = listing.find("a", {"class":"review_count"}).text
-            review_raw = review_raw[0:review_raw.find(' review')]
-            review_raw = int(review_raw.replace(',',''))
-        except:
-            print('ERROR: Skipping')
-            print(listing)
-            review_raw = 0
-    
-        # Filter for review count
-        if review_raw < 100:
-            print(f'Insufficient review count: {review_raw}. Skipping...')
-            skip_sequential +=1 
-        else:
-            print(f'Sufficient reviews: {review_raw}.')
-        
-            #Collect the hotel's url
-            listing_link = listing.find("div", {"class":"listing_title"})
-            links.append(listing_link.find("a")['href'])
-            skip_sequential = 0
-        
-    print('Got the page. Sleeping...')
-    time.sleep(10)
+#Convert to set to remove duplicates (Sponsored hotels)
+links_set = list(set(links))
+
 #%%
 
+link_hotel = 'https://www.tripadvisor.com/'+links_set[0]
+
+link_hotel = 'https://www.tripadvisor.com/Hotel_Review-g28970-d84083-Reviews-Washington_Marriott_Georgetown-Washington_DC_District_of_Columbia.html'
 
 
-#%%
+"""
+#Hotel info
+------------
+
+Hotel name
+Hotel city
+Address
+Hotel star rating
+Hotel user rating
+Hotel blurb
+Hotel ameneties
+Hotel Features
+Location walker
+Location resturaunt
+Location Attraction
+
+#Need to get number of reviews
+ - Then can use the counter function from above
+ 
+
+#Review info
+------------
+
+Date of review
+Date of stay
+Star rating
+Review Title
+Review full text
+User location?
+
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
