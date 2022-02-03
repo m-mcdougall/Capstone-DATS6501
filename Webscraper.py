@@ -42,30 +42,82 @@ os.chdir(wd)
 
 #%%
 
+def gen_property_pages(soup_in):
+    """
+    Generates the URL adders for the number of pages of hotels
+    eg, show page 3 of the results
+    
+    Parameters
+    ----------
+    soup_in : Beautiful Soup Page
+        The full first page's beautiful soup'
+
+    Returns
+    -------
+    output : List
+        A list of all the url page number additives for all pages beyond the first.
+
+    """
+    
+    #Find number of hotel properties
+    prop_raw = soup_in.find('span',{'class':'eMoHQ'}).text
+    properties = int(prop_raw[0:prop_raw.find(' prop')])
+    
+    
+    #Generate addresses in increments of 30
+    output = []
+    count=30
+    while count < properties:
+        output.append('-oa'+str(count)+'-')
+        count+=30
+        
+    return output
+
+#%%
+
+
+cat = [1]
+
+for i in cat:
+    if i ==1:
+        cat.extend([2,3])
+    print(i)
+
+
+#%%
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
 }
 
 #First page
-page_url = ['-', '-oa30-', '-oa60-' ]
+page_url = ['-']
 
 
 links = []
-skip_sequential = 0
+skip_sequential = 100
 
-for page in page_url:
-    url= 'https://www.tripadvisor.com/Hotels-g28970'+page+'Washington_DC_District_of_Columbia-Hotels.html'
-    
-    print('\n\n'+url)
+for pagecount in page_url:
     
     # Once we get to the non-reviewed hotels, stop scraping.
     if skip_sequential >5:
         continue
     
+    url= 'https://www.tripadvisor.com/Hotels-g28970'+pagecount+'Washington_DC_District_of_Columbia-Hotels.html'
     
+    print('\n\n'+url)
+    
+
+    
+    #Download the page info
     page = requests.get(url, headers=headers)
     soup = BeautifulSoup(page.content, 'html.parser')
+    
+    # Parse the number of properties, and add the 
+    # coorresponding number of pages to the search
+    # NOTE: Only do this on the first page, or it will continue infinitely
+    if pagecount == '-':
+        page_url.extend(gen_property_pages(soup))
     
     
     #Extract only the hotel listings div
@@ -77,11 +129,10 @@ for page in page_url:
     
     
     for listing in listings_all:
-    #listing=listings_all[0]
     
         # Only collect links for hotels with sufficient reviews
     
-
+    
         # First, check review count
         try:
             review_raw = listing.find("a", {"class":"review_count"}).text
@@ -107,17 +158,6 @@ for page in page_url:
     print('Got the page. Sleeping...')
     time.sleep(10)
 #%%
-
-#Find number of hotels
-prop_raw = soup.find('span',{'class':'eMoHQ'}).text
-properties = int(prop_raw[0:prop_raw.find(' prop')])
-
-#Round to previous increment of 50
-properties = 145
-50*math.floor(properties/50)
-
-
-
 
 
 
