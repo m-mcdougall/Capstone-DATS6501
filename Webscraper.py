@@ -16,6 +16,10 @@ import math
 import requests
 from bs4 import BeautifulSoup
 
+#Flatten list utility function
+def flatten_list(list_in):
+    return [item for sublist in list_in for item in sublist]
+
 
 #Set the working directory
 wd=os.path.abspath('C://Users//Mariko//Documents//GitHub//Capstone-DATS6501')
@@ -295,6 +299,96 @@ hotel_location_attract = hotel_location_attractA + ' ' + hotel_location_attractB
 
 
 #%%
+
+
+hotel_reviews = int(soup.find('div', {'id':'REVIEWS'}).find('span', {'class':'cdKMr Mc _R b'}).text.replace(',',''))
+
+
+
+#%%
+
+def review_collector(review_text_in):
+    """
+    Collects all the review spans and returns as a list
+
+    Parameters
+    ----------
+    review_text_in : Soup q containing the individial review's spans'
+
+    Returns
+    -------
+    collect : String
+        String containing the contents of all the spans in the review.
+
+
+    """
+
+    #Loop through all spans and extract the text
+    #Linebreaks are represented by seperate spans
+    collect = []
+    for text_block in review_text_in.find_all('span'):
+        collect.append(text_block.text)
+
+    #Return only the string - join if needed
+    if len(collect) == 1:
+        return collect[0]
+    else:
+       return ' '.join(collect)
+
+
+"""
+#Review info
+------------
+
+--Header--
+Date of review
+User location?
+
+--Body--
+Date of stay
+Star rating
+Review Title
+Review full text
+
+"""
+
+
+reviews_div = soup.find('div', {'id':'component_16'}).find_all('div', {'class':'cWwQK MC R2 Gi z Z BB dXjiy'})
+
+# Individual review
+review_in = reviews_div[1]
+
+### Header Information
+
+review_header = review_in.find('div', {'class':'xMxrO'})
+
+review_date = review_header.find('div', {'class':'bcaHz'}).find('span').text
+review_date = review_date[review_date.find('a review')+len('a review ')::]
+
+review_home_loc = review_header.find('div', {'class':'BZmsN'}).find('span').text
+# If reviewer home is not listed, the first div contains their contributions, if so, skip.
+if 'contributions' in review_home_loc:
+    review_home_loc = 'N/A'
+
+
+### Body Information
+
+review_body = review_in.find('div', {'class':'cqoFv _T'})
+
+review_rating = review_body.find('div', {'data-test-target':'review-rating'}).find('span')['class'][1]
+review_rating = int(review_rating[len('bubble_'):-1])
+
+review_title = review_body.find('div', {'data-test-target':'review-title'}).find('span').text
+
+review_text = review_collector(review_body.find('q', {'class':'XllAv H4 _a'}))
+
+
+review_stay_date = review_body.find('span', {'class':'euPKI _R Me S4 H3'}).text
+review_stay_date = review_stay_date[review_stay_date.find(": ")+2::]
+
+#%%
+
+
 
 
 
