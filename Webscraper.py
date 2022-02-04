@@ -163,17 +163,23 @@ link_hotel = 'https://www.tripadvisor.com/Hotel_Review-g28970-d84083-Reviews-Was
 #Hotel info
 ------------
 
+--Header--
 Hotel name
 Hotel city
 Address
-Hotel star rating
+
+--About--
 Hotel user rating
 Hotel blurb
 Hotel ameneties
-Hotel Features
+Hotel room features
+Hotel star rating
+
+--Location--
 Location walker
 Location resturaunt
 Location Attraction
+
 
 #Need to get number of reviews
  - Then can use the counter function from above
@@ -192,34 +198,103 @@ User location?
 """
 
 
+#%%
+
+link_hotel = 'https://www.tripadvisor.com/Hotel_Review-g28970-d84083-Reviews-Washington_Marriott_Georgetown-Washington_DC_District_of_Columbia.html'
+
+#link_hotel = 'https://www.tripadvisor.com/Hotel_Review-g28970-d23149085-Reviews-Lyle_Washington_DC-Washington_DC_District_of_Columbia.html'
+
+#Download the page info
+page = requests.get(link_hotel, headers=headers)
+soup = BeautifulSoup(page.content, 'html.parser')
+#%%
+
+#First, basic hotel info
+
+results_header = soup.find('div', {'id':'component_3'})
+
+hotel_name = results_header.find('h1', {'id':'HEADING'}).text
+hotel_city = results_header.find('div', {'class':'KeVaw'}).find("a").text[10::]
+hotel_address = results_header.find('span', {'class':'ceIOZ yYjkv'}).text
 
 
 
+#%%
+
+# Next, the about section
+
+def amenity_collector(amenity_div):
+    """
+    Collects all amenities offered by the hotel
+    
+    Parameters
+    ----------
+    amenity_div : Soup div for the amenity table
+
+    Returns
+    -------
+    collect : list
+        List of all amenities, given each tag is <200 char.
+        Limit reduces errors in the amenities.
+
+    """
+    
+    collect = []
+    for tags in amenity_div.find_all('div'):
+        amenity = tags.text
+        if len(amenity) < 140:
+            collect.append(amenity)
+        else:
+            print('ERROR: AMENITY TOO LARGE:'+amenity+'\n')
+    return collect
 
 
+'''
+--About--
+Hotel user rating
+Hotel blurb
+Hotel ameneties
+Hotel room features
+Hotel star rating
+'''
+
+results_about = soup.find('div', {'id':'ABOUT_TAB'})
+
+hotel_user_rating = float(results_about.find('span', {'class':'bvcwU P'}).text)
+hotel_blurb = results_about.find('div', {'class':'pIRBV _T'}).text
+hotel_prop_amenity = amenity_collector(results_about.find('div', {'class':'exmBD K'}))
+hotel_room_amenity = amenity_collector(results_about.find_all('div', {'class':'exmBD K'})[1])
+hotel_stars = results_about.find('div', {'class':'drcGn _R MC S4 _a H'}).find('svg')['title']
+hotel_stars = hotel_stars[0:hotel_stars.find(' bubbles')]
+
+#%%
+
+"""
+--Location--
+Location walker
+Location resturaunt
+Location Attraction
+
+"""
+results_location = soup.find('div', {'id':'LOCATION'}).find('div', {'class':'ui_columns'})
+
+hotel_location_walk = results_location.find_all('div', {'class':'eaCqs u v ui_column is-4'})[0]
+hotel_location_walk = hotel_location_walk.find('span', {'class':'bpwqy dfNPK'}).text
 
 
+hotel_location_food = results_location.find_all('div', {'class':'eaCqs u v ui_column is-4'})[1]
+hotel_location_foodA = hotel_location_food.find('span', {'class':'bpwqy VyMdE'}).text
+hotel_location_foodB = hotel_location_food.find('span', {'class':'ehKIl'}).text
+hotel_location_food = hotel_location_foodA + ' ' + hotel_location_foodB
 
 
+hotel_location_attract = results_location.find_all('div', {'class':'eaCqs u v ui_column is-4'})[2]
+hotel_location_attractA = hotel_location_attract.find('span', {'class':'bpwqy eKwbS'}).text
+hotel_location_attractB = hotel_location_attract.find('span', {'class':'ehKIl'}).text
+hotel_location_attract = hotel_location_attractA + ' ' + hotel_location_attractB
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#%%
 
 
 
