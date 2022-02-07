@@ -87,8 +87,8 @@ def gen_property_pages(soup_in):
 
 #%%
 
-url_prefix = 'https://www.tripadvisor.com/Hotels-g28970'
-url_suffix = 'Washington_DC_District_of_Columbia-Hotels.html'
+url_prefix = 'https://www.tripadvisor.com/Hotels-g60811'
+url_suffix = 'Baltimore_Maryland-Hotels.html'
 
 #Initialize variables
 
@@ -164,9 +164,8 @@ links_set = list(set(links))
 
 #%%
 
-link_hotel = 'https://www.tripadvisor.com/'+links_set[0]
+link_hotel = 'https://www.tripadvisor.com/'+links_set[2]
 
-link_hotel = 'https://www.tripadvisor.com/Hotel_Review-g28970-d84083-Reviews-Washington_Marriott_Georgetown-Washington_DC_District_of_Columbia.html'
 
 
 """
@@ -214,8 +213,8 @@ Review full text
 
 #%%
 
-link_hotel = 'https://www.tripadvisor.com/Hotel_Review-g28970-d84083-Reviews-Washington_Marriott_Georgetown-Washington_DC_District_of_Columbia.html'
-link_hotel = 'https://www.tripadvisor.com/Hotel_Review-g28970-d939976-Reviews-Hotel_Zena_A_Viceroy_Urban_Retreat-Washington_DC_District_of_Columbia.html'
+#link_hotel = 'https://www.tripadvisor.com/Hotel_Review-g28970-d84083-Reviews-Washington_Marriott_Georgetown-Washington_DC_District_of_Columbia.html'
+#link_hotel = 'https://www.tripadvisor.com/Hotel_Review-g28970-d939976-Reviews-Hotel_Zena_A_Viceroy_Urban_Retreat-Washington_DC_District_of_Columbia.html'
 
 #Download the page info
 page = requests.get(link_hotel, headers=headers)
@@ -278,20 +277,25 @@ hotel_stars = hotel_stars[0:hotel_stars.find(' bubbles')]
 
 results_location = soup.find('div', {'id':'LOCATION'}).find('div', {'class':'ui_columns'})
 
-hotel_location_walk = results_location.find_all('div', {'class':'eaCqs u v ui_column is-4'})[0]
-hotel_location_walk = hotel_location_walk.find('span', {'class':'bpwqy dfNPK'}).text
+try:
+    hotel_location_walk = results_location.find_all('div', {'class':'eaCqs u v ui_column is-4'})[0]
+    hotel_location_walk = hotel_location_walk.find('span', {'class':'bpwqy dfNPK'}).text
+    
+    
+    hotel_location_food = results_location.find_all('div', {'class':'eaCqs u v ui_column is-4'})[1]
+    hotel_location_foodA = hotel_location_food.find('span', {'class':'bpwqy VyMdE'}).text
+    hotel_location_foodB = hotel_location_food.find('span', {'class':'ehKIl'}).text
+    hotel_location_food = hotel_location_foodA + ' ' + hotel_location_foodB
+    
+    
+    hotel_location_attract = results_location.find_all('div', {'class':'eaCqs u v ui_column is-4'})[2]
+    hotel_location_attractA = hotel_location_attract.find('span', {'class':'bpwqy eKwbS'}).text
+    hotel_location_attractB = hotel_location_attract.find('span', {'class':'ehKIl'}).text
+    hotel_location_attract = hotel_location_attractA + ' ' + hotel_location_attractB
 
-
-hotel_location_food = results_location.find_all('div', {'class':'eaCqs u v ui_column is-4'})[1]
-hotel_location_foodA = hotel_location_food.find('span', {'class':'bpwqy VyMdE'}).text
-hotel_location_foodB = hotel_location_food.find('span', {'class':'ehKIl'}).text
-hotel_location_food = hotel_location_foodA + ' ' + hotel_location_foodB
-
-
-hotel_location_attract = results_location.find_all('div', {'class':'eaCqs u v ui_column is-4'})[2]
-hotel_location_attractA = hotel_location_attract.find('span', {'class':'bpwqy eKwbS'}).text
-hotel_location_attractB = hotel_location_attract.find('span', {'class':'ehKIl'}).text
-hotel_location_attract = hotel_location_attractA + ' ' + hotel_location_attractB
+except:
+    print('This place is far:\n'+link_hotel)
+    hotel_location_walk=hotel_location_food=hotel_location_attract ='0'
 
 
 hotel_series = pd.Series({"hotel_ID":hotel_ID, "hotel_name":hotel_name, "hotel_city":hotel_city,
@@ -311,7 +315,7 @@ city_ID = hotel_ID[0:hotel_ID.find('-')]
 # Check if city already exists
 # Append if file exists, new file if not
 
-if city_ID+'.csv' not in os.listdir(wd+'//Data'):
+if 'Hotels_'+city_ID+'.csv' not in os.listdir(wd+'//Data'):
     hotel_series.to_csv(wd+'//Data//Hotels_'+city_ID+'.csv', mode = 'w', index=False, header=True)
 else:
     hotel_series.to_csv(wd+'//Data//Hotels_'+city_ID+'.csv', mode = 'a', index=False, header=False)
@@ -406,39 +410,42 @@ def review_page_collector(reviews_div_in, hotel_ID_in):
     # Individual review
     for review_in in reviews_div_in:
        
-        ### Header Information
-        
-        review_header = review_in.find('div', {'class':'xMxrO'})
-        
-        review_date = review_header.find('div', {'class':'bcaHz'}).find('span').text
-        review_date = review_date[review_date.find('a review')+len('a review ')::]
-        
-        review_home_loc = review_header.find('div', {'class':'BZmsN'}).find('span').text
-        # If reviewer home is not listed, the first div contains their contributions, if so, skip.
-        if 'contributions' in review_home_loc:
-            review_home_loc = 'N/A'
-        
-        
-        ### Body Information
-        
-        review_body = review_in.find('div', {'class':'cqoFv _T'})
-        
-        review_rating = review_body.find('div', {'data-test-target':'review-rating'}).find('span')['class'][1]
-        review_rating = int(review_rating[len('bubble_'):-1])
-        
-        review_title = review_body.find('div', {'data-test-target':'review-title'}).find('span').text
-        
-        review_text = review_span_collector(review_body.find('q', {'class':'XllAv H4 _a'}))
-        
-        
-        review_stay_date = review_body.find('span', {'class':'euPKI _R Me S4 H3'}).text
-        review_stay_date = review_stay_date[review_stay_date.find(": ")+2::]
-        
-        out = pd.Series({'Hotel_ID':hotel_ID_in,'Review_date':review_date, 'Reviewer_loc':review_home_loc, 
-                         'Review_rating':review_rating,'Review_stay_date':review_stay_date,
-                         'Review_title':review_title, 'Review_text':review_text})
-        
-        collect.append(out)
+        try:
+            ### Header Information
+            
+            review_header = review_in.find('div', {'class':'xMxrO'})
+            
+            review_date = review_header.find('div', {'class':'bcaHz'}).find('span').text
+            review_date = review_date[review_date.find('a review')+len('a review ')::]
+            
+            review_home_loc = review_header.find('div', {'class':'BZmsN'}).find('span').text
+            # If reviewer home is not listed, the first div contains their contributions, if so, skip.
+            if 'contributions' in review_home_loc:
+                review_home_loc = 'N/A'
+            
+            
+            ### Body Information
+            
+            review_body = review_in.find('div', {'class':'cqoFv _T'})
+            
+            review_rating = review_body.find('div', {'data-test-target':'review-rating'}).find('span')['class'][1]
+            review_rating = int(review_rating[len('bubble_'):-1])
+            
+            review_title = review_body.find('div', {'data-test-target':'review-title'}).find('span').text
+            
+            review_text = review_span_collector(review_body.find('q', {'class':'XllAv H4 _a'}))
+            
+            
+            review_stay_date = review_body.find('span', {'class':'euPKI _R Me S4 H3'}).text
+            review_stay_date = review_stay_date[review_stay_date.find(": ")+2::]
+            
+            out = pd.Series({'Hotel_ID':hotel_ID_in,'Review_date':review_date, 'Reviewer_loc':review_home_loc, 
+                             'Review_rating':review_rating,'Review_stay_date':review_stay_date,
+                             'Review_title':review_title, 'Review_text':review_text})
+            
+            collect.append(out)
+        except:
+            print('ERROR READING. SKIPPING REVIEW.')
     
     return collect
 
@@ -453,7 +460,7 @@ for review_i in tqdm(reviews_pages_2plus):
         #Download the page info
         page = requests.get(review_i, headers=headers)
         soup = BeautifulSoup(page.content, 'html.parser')
-        time.sleep(3.24)
+        time.sleep(1.24)
 
     reviews_div = soup.find('div', {'id':'component_16'}).find_all('div', {'class':'cWwQK MC R2 Gi z Z BB dXjiy'})
     
@@ -472,10 +479,6 @@ all_reviews_flat = pd.DataFrame(all_reviews_flat)
 
 
 
-
-#%%
-
-
 ## Save the Review Data to City file
 
 city_ID = hotel_ID[0:hotel_ID.find('-')]
@@ -483,7 +486,7 @@ city_ID = hotel_ID[0:hotel_ID.find('-')]
 # Check if city already exists
 # Append if file exists, new file if not
 
-if city_ID+'.csv' not in os.listdir(wd+'//Data'):
+if 'Reviews_'+city_ID+'.csv' not in os.listdir(wd+'//Data'):
     all_reviews_flat.to_csv(wd+'//Data//Reviews_'+city_ID+'.csv', mode = 'w', index=False, header=True)
 else:
     all_reviews_flat.to_csv(wd+'//Data//Reviews_'+city_ID+'.csv', mode = 'a', index=False, header=False)
