@@ -26,6 +26,12 @@ wd=os.path.abspath('C://Users//Mariko//Documents//GitHub//Capstone-DATS6501')
 os.chdir(wd)
 
 
+#Set the headers for the scraper
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
+}
+
+
 # https://github.com/m-mcdougall/BicycleTheft-DATS6103/blob/main/Web%20Scraper%20and%20Updater.ipynb
 # https://github.com/m-mcdougall/Remote_Careers-DATS6401/blob/main/Websraper.py
 
@@ -81,16 +87,16 @@ def gen_property_pages(soup_in):
 
 #%%
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-}
+url_prefix = 'https://www.tripadvisor.com/Hotels-g28970'
+url_suffix = 'Washington_DC_District_of_Columbia-Hotels.html'
 
-#First page
-page_url = ['-']
+#Initialize variables
 
-
+page_url = ['-'] #First page
 links = []
 skip_sequential = 0
+
+
 
 for pagecount in page_url:
     
@@ -98,7 +104,7 @@ for pagecount in page_url:
     if skip_sequential <5:
         
         
-        url= 'https://www.tripadvisor.com/Hotels-g28970'+pagecount+'Washington_DC_District_of_Columbia-Hotels.html'
+        url= url_prefix+pagecount+url_suffix
         
         print('\n\n'+url)
         
@@ -192,12 +198,16 @@ Location Attraction
 #Review info
 ------------
 
+--Header--
 Date of review
+User location?
+
+--Body--
 Date of stay
 Star rating
 Review Title
 Review full text
-User location?
+
 
 """
 
@@ -298,9 +308,7 @@ hotel_location_attractB = hotel_location_attract.find('span', {'class':'ehKIl'})
 hotel_location_attract = hotel_location_attractA + ' ' + hotel_location_attractB
 
 
-#%%
-
-
+#Number of reviews
 hotel_reviews = int(soup.find('div', {'id':'REVIEWS'}).find('span', {'class':'cdKMr Mc _R b'}).text.replace(',',''))
 
 
