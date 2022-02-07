@@ -315,33 +315,6 @@ hotel_reviews = int(soup.find('div', {'id':'REVIEWS'}).find('span', {'class':'cd
 
 #%%
 
-def review_collector(review_text_in):
-    """
-    Collects all the review spans and returns as a list
-
-    Parameters
-    ----------
-    review_text_in : Soup q containing the individial review's spans'
-
-    Returns
-    -------
-    collect : String
-        String containing the contents of all the spans in the review.
-
-
-    """
-
-    #Loop through all spans and extract the text
-    #Linebreaks are represented by seperate spans
-    collect = []
-    for text_block in review_text_in.find_all('span'):
-        collect.append(text_block.text)
-
-    #Return only the string - join if needed
-    if len(collect) == 1:
-        return collect[0]
-    else:
-       return ' '.join(collect)
 
 
 """
@@ -363,38 +336,150 @@ Review full text
 
 reviews_div = soup.find('div', {'id':'component_16'}).find_all('div', {'class':'cWwQK MC R2 Gi z Z BB dXjiy'})
 
-# Individual review
-review_in = reviews_div[1]
-
-### Header Information
-
-review_header = review_in.find('div', {'class':'xMxrO'})
-
-review_date = review_header.find('div', {'class':'bcaHz'}).find('span').text
-review_date = review_date[review_date.find('a review')+len('a review ')::]
-
-review_home_loc = review_header.find('div', {'class':'BZmsN'}).find('span').text
-# If reviewer home is not listed, the first div contains their contributions, if so, skip.
-if 'contributions' in review_home_loc:
-    review_home_loc = 'N/A'
 
 
-### Body Information
 
-review_body = review_in.find('div', {'class':'cqoFv _T'})
+def review_page_collector(reviews_div_in):
+    """
+    Collects the contents of the entire reviews_div,
+    collecting all the informaion from all reviews on the page
 
-review_rating = review_body.find('div', {'data-test-target':'review-rating'}).find('span')['class'][1]
-review_rating = int(review_rating[len('bubble_'):-1])
+    Parameters
+    ----------
+    reviews_div_in : soup div for the reviews
 
-review_title = review_body.find('div', {'data-test-target':'review-title'}).find('span').text
+    Returns
+    -------
+    collect : list of pandas Series
+        Contains all the reviews as a series each.
 
-review_text = review_collector(review_body.find('q', {'class':'XllAv H4 _a'}))
+    """
+
+    def review_span_collector(review_text_in):
+        """
+        Collects all the review spans and returns as a list
+    
+        Parameters
+        ----------
+        review_text_in : Soup q containing the individial review's spans'
+    
+        Returns
+        -------
+        collect : String
+            String containing the contents of all the spans in the review.    
+        """
+    
+        #Loop through all spans and extract the text
+        #Linebreaks are represented by seperate spans
+        collect = []
+        for text_block in review_text_in.find_all('span'):
+            collect.append(text_block.text)
+    
+        #Return only the string - join if needed
+        if len(collect) == 1:
+            return collect[0]
+        else:
+           return ' '.join(collect)
 
 
-review_stay_date = review_body.find('span', {'class':'euPKI _R Me S4 H3'}).text
-review_stay_date = review_stay_date[review_stay_date.find(": ")+2::]
+    collect = []
+    
+    # Individual review
+    for review_in in reviews_div_in:
+       
+        ### Header Information
+        
+        review_header = review_in.find('div', {'class':'xMxrO'})
+        
+        review_date = review_header.find('div', {'class':'bcaHz'}).find('span').text
+        review_date = review_date[review_date.find('a review')+len('a review ')::]
+        
+        review_home_loc = review_header.find('div', {'class':'BZmsN'}).find('span').text
+        # If reviewer home is not listed, the first div contains their contributions, if so, skip.
+        if 'contributions' in review_home_loc:
+            review_home_loc = 'N/A'
+        
+        
+        ### Body Information
+        
+        review_body = review_in.find('div', {'class':'cqoFv _T'})
+        
+        review_rating = review_body.find('div', {'data-test-target':'review-rating'}).find('span')['class'][1]
+        review_rating = int(review_rating[len('bubble_'):-1])
+        
+        review_title = review_body.find('div', {'data-test-target':'review-title'}).find('span').text
+        
+        review_text = review_span_collector(review_body.find('q', {'class':'XllAv H4 _a'}))
+        
+        
+        review_stay_date = review_body.find('span', {'class':'euPKI _R Me S4 H3'}).text
+        review_stay_date = review_stay_date[review_stay_date.find(": ")+2::]
+        
+        out = pd.Series({'Review_date':review_date, 'Reviewer_loc':review_home_loc, 'Review_rating':review_rating,
+                         'Review_stay_date':review_stay_date,'Revie_title':review_title, 'Review_text':review_text})
+        
+        collect.append(out)
+    
+    return collect
 
+x = review_page_collector(reviews_div)
 #%%
+
+
+
+
+link_hotel = 'https://www.tripadvisor.com/Hotel_Review-g28970-d84083-Reviews-Washington_Marriott_Georgetown-Washington_DC_District_of_Columbia.html'
+
+
+
+
+
+
+
+def gen_review_pages(review_url, review_count):
+    """
+    Generates the URL adders for the number of pages of reviews
+    eg, show page 3 of the results
+    
+    Parameters
+    ----------
+    review_url : URL of the hotel's base review page
+    review_count : The number of reviews for the hotel
+
+    Returns
+    -------
+    output : List
+        A list of all the urls for pages beyond the first.
+
+    """
+    
+    #Split the url into segments
+    split = review_url.find('-Reviews-')
+    
+    review_url_pre = review_url[0:split]
+    review_url_post = review_url[split::]
+    
+    
+    #Generate addresses in increments of 30
+    output = []
+    count=5
+    while count < review_count:
+        output.append(review_url_pre+'-or'+str(count)+review_url_post)
+        count+=5
+        
+    return output
+
+
+
+x=gen_review_pages(link_hotel, 214)
+
+
+
+
+
+
+
+
 
 
 
