@@ -45,7 +45,7 @@ headers = {
 1. Search fo the city, since the htmls are custom
 2. Navigate to the hotels page
 3. Collect hotels for various star ranges
-4. Navigate to each otel page
+4. Navigate to each hotel page
 5. Save the location, and a selection of reviews
 
 """
@@ -215,27 +215,13 @@ Review full text
 #%%
 
 link_hotel = 'https://www.tripadvisor.com/Hotel_Review-g28970-d84083-Reviews-Washington_Marriott_Georgetown-Washington_DC_District_of_Columbia.html'
-
-#link_hotel = 'https://www.tripadvisor.com/Hotel_Review-g28970-d23149085-Reviews-Lyle_Washington_DC-Washington_DC_District_of_Columbia.html'
+link_hotel = 'https://www.tripadvisor.com/Hotel_Review-g28970-d939976-Reviews-Hotel_Zena_A_Viceroy_Urban_Retreat-Washington_DC_District_of_Columbia.html'
 
 #Download the page info
 page = requests.get(link_hotel, headers=headers)
 soup = BeautifulSoup(page.content, 'html.parser')
-#%%
-
-#First, basic hotel info
-
-results_header = soup.find('div', {'id':'component_3'})
-
-hotel_name = results_header.find('h1', {'id':'HEADING'}).text
-hotel_city = results_header.find('div', {'class':'KeVaw'}).find("a").text[10::]
-hotel_address = results_header.find('span', {'class':'ceIOZ yYjkv'}).text
-
-
 
 #%%
-
-# Next, the about section
 
 def amenity_collector(amenity_div):
     """
@@ -263,14 +249,19 @@ def amenity_collector(amenity_div):
     return collect
 
 
-'''
---About--
-Hotel user rating
-Hotel blurb
-Hotel ameneties
-Hotel room features
-Hotel star rating
-'''
+## Basic Info Section
+
+hotel_ID  = link_hotel[link_hotel.find('Hotel_Review-')+len('Hotel_Review-'):link_hotel.find('-Reviews')]
+
+results_header = soup.find('div', {'id':'component_3'})
+
+hotel_name = results_header.find('h1', {'id':'HEADING'}).text
+hotel_city = results_header.find('div', {'class':'KeVaw'}).find("a").text[10::]
+hotel_address = results_header.find('span', {'class':'ceIOZ yYjkv'}).text
+
+
+
+## About Section
 
 results_about = soup.find('div', {'id':'ABOUT_TAB'})
 
@@ -281,15 +272,10 @@ hotel_room_amenity = amenity_collector(results_about.find_all('div', {'class':'e
 hotel_stars = results_about.find('div', {'class':'drcGn _R MC S4 _a H'}).find('svg')['title']
 hotel_stars = hotel_stars[0:hotel_stars.find(' bubbles')]
 
-#%%
 
-"""
---Location--
-Location walker
-Location resturaunt
-Location Attraction
 
-"""
+## Location Section
+
 results_location = soup.find('div', {'id':'LOCATION'}).find('div', {'class':'ui_columns'})
 
 hotel_location_walk = results_location.find_all('div', {'class':'eaCqs u v ui_column is-4'})[0]
@@ -308,38 +294,71 @@ hotel_location_attractB = hotel_location_attract.find('span', {'class':'ehKIl'})
 hotel_location_attract = hotel_location_attractA + ' ' + hotel_location_attractB
 
 
-#Number of reviews
+hotel_series = pd.Series({"hotel_ID":hotel_ID, "hotel_name":hotel_name, "hotel_city":hotel_city,
+                          "hotel_address":hotel_address, "hotel_user_rating":hotel_user_rating,
+                          "hotel_blurb":hotel_blurb, "hotel_prop_amenity":hotel_prop_amenity, 
+                          "hotel_room_amenity":hotel_room_amenity, "hotel_stars":hotel_stars, 
+                          "hotel_location_walk":hotel_location_walk, "hotel_location_food":hotel_location_food,
+                          "hotel_location_attract":hotel_location_attract})
+
+hotel_series = pd.DataFrame(hotel_series).T
+
+
+## Save the Hotel Data to City file
+
+city_ID = hotel_ID[0:hotel_ID.find('-')]
+
+# Check if city already exists
+# Append if file exists, new file if not
+
+if city_ID+'.csv' not in os.listdir(wd+'//Data'):
+    hotel_series.to_csv(wd+'//Data//Hotels_'+city_ID+'.csv', mode = 'w', index=False, header=True)
+else:
+    hotel_series.to_csv(wd+'//Data//Hotels_'+city_ID+'.csv', mode = 'a', index=False, header=False)
+
+
+#%%
+## Reviews Section
 hotel_reviews = int(soup.find('div', {'id':'REVIEWS'}).find('span', {'class':'cdKMr Mc _R b'}).text.replace(',',''))
 
 
 
-#%%
+
+def gen_review_pages(review_url, review_count):
+    """
+    Generates the URL adders for the number of pages of reviews
+    eg, show page 3 of the results
+    
+    Parameters
+    ----------
+    review_url : URL of the hotel's base review page
+    review_count : The number of reviews for the hotel
+
+    Returns
+    -------
+    output : List
+        A list of all the urls for pages beyond the first.
+
+    """
+    
+    #Split the url into segments
+    split = review_url.find('-Reviews-')
+    
+    review_url_pre = review_url[0:split]
+    review_url_post = review_url[split::]
+    
+    
+    #Generate addresses in increments of 30
+    output = []
+    count=5
+    while count < review_count:
+        output.append(review_url_pre+'-or'+str(count)+review_url_post)
+        count+=5
+        
+    return output
 
 
-
-"""
-#Review info
-------------
-
---Header--
-Date of review
-User location?
-
---Body--
-Date of stay
-Star rating
-Review Title
-Review full text
-
-"""
-
-
-reviews_div = soup.find('div', {'id':'component_16'}).find_all('div', {'class':'cWwQK MC R2 Gi z Z BB dXjiy'})
-
-
-
-
-def review_page_collector(reviews_div_in):
+def review_page_collector(reviews_div_in, hotel_ID_in):
     """
     Collects the contents of the entire reviews_div,
     collecting all the informaion from all reviews on the page
@@ -415,65 +434,59 @@ def review_page_collector(reviews_div_in):
         review_stay_date = review_body.find('span', {'class':'euPKI _R Me S4 H3'}).text
         review_stay_date = review_stay_date[review_stay_date.find(": ")+2::]
         
-        out = pd.Series({'Review_date':review_date, 'Reviewer_loc':review_home_loc, 'Review_rating':review_rating,
-                         'Review_stay_date':review_stay_date,'Revie_title':review_title, 'Review_text':review_text})
+        out = pd.Series({'Hotel_ID':hotel_ID_in,'Review_date':review_date, 'Reviewer_loc':review_home_loc, 
+                         'Review_rating':review_rating,'Review_stay_date':review_stay_date,
+                         'Review_title':review_title, 'Review_text':review_text})
         
         collect.append(out)
     
     return collect
 
-x = review_page_collector(reviews_div)
+
+reviews_pages_2plus = [link_hotel] + gen_review_pages(link_hotel, hotel_reviews)
+
+all_reviews = []
+
+for review_i in tqdm(reviews_pages_2plus):
+    
+    if review_i != link_hotel:
+        #Download the page info
+        page = requests.get(review_i, headers=headers)
+        soup = BeautifulSoup(page.content, 'html.parser')
+        time.sleep(3.24)
+
+    reviews_div = soup.find('div', {'id':'component_16'}).find_all('div', {'class':'cWwQK MC R2 Gi z Z BB dXjiy'})
+    
+    
+    all_reviews.append(review_page_collector(reviews_div, hotel_ID))
+
+
+all_reviews_flat = flatten_list(all_reviews)
+all_reviews_flat = pd.DataFrame(all_reviews_flat)
+
+
+
+
+
+
+
+
+
+
 #%%
 
 
+## Save the Review Data to City file
 
+city_ID = hotel_ID[0:hotel_ID.find('-')]
 
-link_hotel = 'https://www.tripadvisor.com/Hotel_Review-g28970-d84083-Reviews-Washington_Marriott_Georgetown-Washington_DC_District_of_Columbia.html'
+# Check if city already exists
+# Append if file exists, new file if not
 
-
-
-
-
-
-
-def gen_review_pages(review_url, review_count):
-    """
-    Generates the URL adders for the number of pages of reviews
-    eg, show page 3 of the results
-    
-    Parameters
-    ----------
-    review_url : URL of the hotel's base review page
-    review_count : The number of reviews for the hotel
-
-    Returns
-    -------
-    output : List
-        A list of all the urls for pages beyond the first.
-
-    """
-    
-    #Split the url into segments
-    split = review_url.find('-Reviews-')
-    
-    review_url_pre = review_url[0:split]
-    review_url_post = review_url[split::]
-    
-    
-    #Generate addresses in increments of 30
-    output = []
-    count=5
-    while count < review_count:
-        output.append(review_url_pre+'-or'+str(count)+review_url_post)
-        count+=5
-        
-    return output
-
-
-
-x=gen_review_pages(link_hotel, 214)
-
-
+if city_ID+'.csv' not in os.listdir(wd+'//Data'):
+    all_reviews_flat.to_csv(wd+'//Data//Reviews_'+city_ID+'.csv', mode = 'w', index=False, header=True)
+else:
+    all_reviews_flat.to_csv(wd+'//Data//Reviews_'+city_ID+'.csv', mode = 'a', index=False, header=False)
 
 
 
