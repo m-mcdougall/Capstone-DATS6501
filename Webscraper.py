@@ -87,8 +87,8 @@ def gen_property_pages(soup_in):
 
 #%%
 
-url_prefix = 'https://www.tripadvisor.com/Hotels-g60811'
-url_suffix = 'Baltimore_Maryland-Hotels.html'
+url_prefix = 'https://www.tripadvisor.com/Hotels-g60805'
+url_suffix = 'Jacksonville_Florida-Hotels.html'
 
 def city_hotel_links_scraper(url_prefix_in, url_suffix_in):
     #Initialize variables
@@ -146,7 +146,7 @@ def city_hotel_links_scraper(url_prefix_in, url_suffix_in):
                     review_raw = 0
             
                 # Filter for review count
-                if review_raw < 100:
+                if review_raw < 50:
                     print(f'Insufficient review count: {review_raw}. Skipping...')
                     skip_sequential +=1 
                 else:
@@ -255,7 +255,7 @@ def hotel_and_review_scraper(link_hotel):
     
     hotel_ID  = link_hotel[link_hotel.find('Hotel_Review-')+len('Hotel_Review-'):link_hotel.find('-Reviews')]
     
-    results_header = soup.find('div', {'id':'component_3'})
+    results_header = soup.find('div', {'id':'taplc_hotel_review_atf_hotel_info_web_component_0'})
     
     hotel_name = results_header.find('h1', {'id':'HEADING'}).text
     hotel_city = results_header.find('div', {'class':'KeVaw'}).find("a").text[10::]
@@ -268,13 +268,18 @@ def hotel_and_review_scraper(link_hotel):
     results_about = soup.find('div', {'id':'ABOUT_TAB'})
     
     hotel_user_rating = float(results_about.find('span', {'class':'bvcwU P'}).text)
-    hotel_blurb = results_about.find('div', {'class':'pIRBV _T'}).text
+    try:
+        hotel_blurb = results_about.find('div', {'class':'pIRBV _T'}).text
+    except:
+        hotel_blurb = 'N/A'
     hotel_prop_amenity = amenity_collector(results_about.find('div', {'class':'exmBD K'}))
     hotel_room_amenity = amenity_collector(results_about.find_all('div', {'class':'exmBD K'})[1])
-    hotel_stars = results_about.find('div', {'class':'drcGn _R MC S4 _a H'}).find('svg')['title']
-    hotel_stars = hotel_stars[0:hotel_stars.find(' bubbles')]
     
-    
+    try:
+        hotel_stars = results_about.find('div', {'class':'drcGn _R MC S4 _a H'}).find('svg')['title']
+        hotel_stars = hotel_stars[0:hotel_stars.find(' bubbles')]
+    except:  
+        hotel_stars = 'N/A'
     
     ## Location Section
     
@@ -467,7 +472,7 @@ def hotel_and_review_scraper(link_hotel):
             #Download the page info
             page = requests.get(review_i, headers=headers)
             soup = BeautifulSoup(page.content, 'html.parser')
-            time.sleep(1.24)
+            #time.sleep(1.24)
     
         reviews_div = soup.find('div', {'id':'component_16'}).find_all('div', {'class':'cWwQK MC R2 Gi z Z BB dXjiy'})
         
@@ -495,10 +500,12 @@ def hotel_and_review_scraper(link_hotel):
 
 
 #%%
+problem_children = []
 
-for h in range(4,60):
+for h in range(1,len(links_set)):
+#for h in range(0,1):
     
-    print(f'\n\n\n   Now working on {h}/60\n###########################')
+    print(f'\n\n\n   Now working on {h}/{len(links_set)}\n###########################')
     
     link_hotel_test = 'https://www.tripadvisor.com/'+links_set[h]
     
@@ -506,7 +513,12 @@ for h in range(4,60):
     #link_hotel_test = 'https://www.tripadvisor.com/Hotel_Review-g28970-d84083-Reviews-Washington_Marriott_Georgetown-Washington_DC_District_of_Columbia.html'
     #link_hotel_test = 'https://www.tripadvisor.com/Hotel_Review-g28970-d939976-Reviews-Hotel_Zena_A_Viceroy_Urban_Retreat-Washington_DC_District_of_Columbia.html'
     
-    hotel_and_review_scraper(link_hotel_test)
+    try:
+        hotel_and_review_scraper(link_hotel_test)
+    except:
+        problem_children.append(link_hotel_test)
+        print(f'There are now {len(problem_children)} Problem Children')
+        print(link_hotel_test)
     
 
 
