@@ -156,6 +156,7 @@ def city_hotel_links_scraper(url_prefix_in, url_suffix_in):
             listings_all = results.find_all("div", {"class":"meta_listing ui_columns large_thumbnail_mobile"})
             skip_sequential=0
             
+
             for listing in listings_all:
                 
                 # Only collect links for hotels with sufficient reviews
