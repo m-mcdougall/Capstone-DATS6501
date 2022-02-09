@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
-all_cities = ['',
-              '',
-              '',
-              '',
+runfile('C:/Users/Mariko/Documents/GitHub/Capstone-DATS6501/Webscraper.py', wdir='C:/Users/Mariko/Documents/GitHub/Capstone-DATS6501')
+
+
+all_cities = ['https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g60766-Little_Rock_Arkansas-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g33726-Bridgeport_Connecticut-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g34059-Wilmington_Delaware-Hotels.html',
               ]
 
 problem_children = []
@@ -41,3 +44,26 @@ for city_url in all_cities:
             
 #%%
 
+
+"""
+problem_errors = []
+
+for h in range(0,len(problem_children)-1):
+#for h in range(0,1):
+    
+    print(f'\n\n\n   Now working on {h}/{len(problem_children)-1}\n###########################')
+    
+    link_hotel_test = 'https://www.tripadvisor.com/'+problem_children[h]
+    
+    
+    #link_hotel_test = 'https://www.tripadvisor.com/Hotel_Review-g28970-d84083-Reviews-Washington_Marriott_Georgetown-Washington_DC_District_of_Columbia.html'
+    #link_hotel_test = 'https://www.tripadvisor.com/Hotel_Review-g28970-d939976-Reviews-Hotel_Zena_A_Viceroy_Urban_Retreat-Washington_DC_District_of_Columbia.html'
+    
+    try:
+        hotel_and_review_scraper(link_hotel_test)
+    except:
+        problem_errors.append(link_hotel_test)
+        print(f'There are now {len(problem_errors)} Double Problems')
+        print(link_hotel_test)
+    
+"""
