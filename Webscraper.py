@@ -32,6 +32,9 @@ headers = {
 }
 
 
+city_url = 'https://www.tripadvisor.com/Hotels-g35805-Chicago_Illinois-Hotels.html'
+
+
 # https://github.com/m-mcdougall/BicycleTheft-DATS6103/blob/main/Web%20Scraper%20and%20Updater.ipynb
 # https://github.com/m-mcdougall/Remote_Careers-DATS6401/blob/main/Websraper.py
 
@@ -87,8 +90,31 @@ def gen_property_pages(soup_in):
 
 #%%
 
-url_prefix = 'https://www.tripadvisor.com/Hotels-g60805'
-url_suffix = 'Jacksonville_Florida-Hotels.html'
+def hotel_page_url_splitter(url_base):
+    """
+
+    Parameters
+    ----------
+    url_base : String
+        The url to the base city hotels listing.
+
+    Returns
+    -------
+    url_prefix : String
+        The begining to the url, split after the city code
+    url_suffix : String
+        The ending to the url, split after the city code and hyphen
+
+    """
+    
+    split = url_base.find('Hotels-')+len('Hotels-')+6
+    
+    url_prefix = url_base[0:split]
+    url_suffix = url_base[split+1::]
+    
+    return url_prefix, url_suffix
+
+url_prefix, url_suffix = hotel_page_url_splitter(city_url)
 
 def city_hotel_links_scraper(url_prefix_in, url_suffix_in):
     #Initialize variables
@@ -502,10 +528,10 @@ def hotel_and_review_scraper(link_hotel):
 #%%
 problem_children = []
 
-for h in range(1,len(links_set)):
+for h in range(0,len(links_set)):
 #for h in range(0,1):
     
-    print(f'\n\n\n   Now working on {h}/{len(links_set)}\n###########################')
+    print(f'\n\n\n   Now working on {h}/{len(links_set)-1}\n###########################')
     
     link_hotel_test = 'https://www.tripadvisor.com/'+links_set[h]
     
@@ -521,9 +547,31 @@ for h in range(1,len(links_set)):
         print(link_hotel_test)
     
 
+#%%
 
 
+"""
+problem_errors = []
 
+for h in range(0,len(problem_children)-1):
+#for h in range(0,1):
+    
+    print(f'\n\n\n   Now working on {h}/{len(problem_children)-1}\n###########################')
+    
+    link_hotel_test = 'https://www.tripadvisor.com/'+problem_children[h]
+    
+    
+    #link_hotel_test = 'https://www.tripadvisor.com/Hotel_Review-g28970-d84083-Reviews-Washington_Marriott_Georgetown-Washington_DC_District_of_Columbia.html'
+    #link_hotel_test = 'https://www.tripadvisor.com/Hotel_Review-g28970-d939976-Reviews-Hotel_Zena_A_Viceroy_Urban_Retreat-Washington_DC_District_of_Columbia.html'
+    
+    try:
+        hotel_and_review_scraper(link_hotel_test)
+    except:
+        problem_errors.append(link_hotel_test)
+        print(f'There are now {len(problem_errors)} Double Problems')
+        print(link_hotel_test)
+    
+"""
 
 
 
