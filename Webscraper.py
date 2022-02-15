@@ -69,7 +69,12 @@ def gen_property_pages(soup_in):
     
     #Find number of hotel properties
     prop_raw = soup_in.find('span',{'class':'eMoHQ'}).text
-    properties = int(prop_raw[0:prop_raw.find(' prop')])
+    
+    try:
+        #For larger cities, will list total number
+        properties = int(prop_raw[0:prop_raw.find(' prop')])
+    except:
+        properties = int(prop_raw[prop_raw.find('of ')+3:prop_raw.find(' prop')])
     
     
     #Generate addresses in increments of 30

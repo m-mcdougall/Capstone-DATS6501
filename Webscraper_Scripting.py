@@ -3,11 +3,36 @@
 runfile('C:/Users/Mariko/Documents/GitHub/Capstone-DATS6501/Webscraper.py', wdir='C:/Users/Mariko/Documents/GitHub/Capstone-DATS6501')
 
 
-all_cities = ['https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g60766-Little_Rock_Arkansas-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g33726-Bridgeport_Connecticut-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g34059-Wilmington_Delaware-Hotels.html',
-              ]
+all_cities = [#'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g60766-Little_Rock_Arkansas-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g33726-Bridgeport_Connecticut-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g34059-Wilmington_Delaware-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g32655-Los_Angeles_California-Hotels.html', 
+              #'https://www.tripadvisor.com/Hotels-g60898-Atlanta_Georgia-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g60864-New_Orleans_Louisiana-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g35394-Boise_Idaho-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g42139-Detroit_Michigan-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g45086-Billings_Montana-Hotels.html'
+              #'https://www.tripadvisor.com/Hotels-g60878-Seattle_Washington-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g60946-Providence_Rhode_Island-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g60097-Milwaukee_Wisconsin-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g57201-Burlington_Vermont-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g28970-Washington_DC_District_of_Columbia-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g31310-Phoenix_Arizona-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g37209-Indianapolis_Indiana-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g37835-Des_Moines_Iowa-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g60982-Honolulu_Oahu_Hawaii-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g60933-Albuquerque_New_Mexico-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g60745-Boston_Massachusetts-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g54171-Charleston_South_Carolina-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g58947-Charleston_West_Virginia-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g60439-Cheyenne_Wyoming-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g50226-Columbus_Ohio-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g49785-Fargo_North_Dakota-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g56003-Houston_Texas-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g43833-Jackson_Mississippi-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g44535-Kansas_City_Missouri-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g60766-Little_Rock_Arkansas-Hotels.html',]
 
 problem_children = []
 
