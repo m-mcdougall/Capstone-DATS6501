@@ -29,10 +29,17 @@ all_cities = [#'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotel
               #'https://www.tripadvisor.com/Hotels-g60439-Cheyenne_Wyoming-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g50226-Columbus_Ohio-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g49785-Fargo_North_Dakota-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g56003-Houston_Texas-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g43833-Jackson_Mississippi-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g44535-Kansas_City_Missouri-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g60766-Little_Rock_Arkansas-Hotels.html',]
+              #'https://www.tripadvisor.com/Hotels-g56003-Houston_Texas-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g43833-Jackson_Mississippi-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g44535-Kansas_City_Missouri-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g60766-Little_Rock_Arkansas-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g33726-Bridgeport_Connecticut-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g45963-Las_Vegas_Nevada-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g32655-Los_Angeles_California-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g39604-Louisville_Kentucky-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g46152-Manchester_New_Hampshire-Hotels.html',
+              ]
 
 problem_children = []
 

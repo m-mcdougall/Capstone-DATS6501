@@ -10,6 +10,7 @@ import time
 import concurrent.futures as cf
 from tqdm import tqdm
 import math
+import nltk
 
 
 #Flatten list utility function
@@ -60,57 +61,6 @@ hotels_df=hotels_df.join(review_stats_sem, on='hotel_ID')
 
 #%%
 
-"""
-#---------
-Pre-processing
-----------
-
-To extract the features:
-    
-Cleaning steps
-
-tfid
-
-
-#--------
-"""
-
-
-
-demo_review = reviews_df.Review_text.to_numpy()
-
-#Tokenize words (casual)
-import nltk
-from nltk.tokenize.casual import casual_tokenize
-reviews_token = [casual_tokenize(review, reduce_len=True) for review in demo_review]
-reviews_token_n = [[word.lower() for word in sent] for sent in reviews_token]
-
-
-#Remove stopwords
-from nltk.corpus import stopwords
-stopwords = nltk.corpus.stopwords.words('english')
-reviews_token_stop = [[word for word in sent if word not in stopwords] for sent in reviews_token_n]
-
-
-#Lemmatize
-from nltk.stem import WordNetLemmatizer
-lemmatizer = WordNetLemmatizer()
-reviews_token_lem = [[lemmatizer.lemmatize(word) for word in sent] for sent in reviews_token_stop]
-
-
-#Remove punctuation
-import string
-punc = string.punctuation + '’' + "”" + "“" + '…'
-reviews_token_pun = [[word for word in sent if word not in punc] for sent in reviews_token_lem]
-
-
-#Remove elipses
-import re
-reviews_token_dots = [[re.sub(r'\.[\.]+', '', word) for word in sent] for sent in reviews_token_pun]
-reviews_token_dots = [[word for word in sent if word != ''] for sent in reviews_token_dots]
-
-
-#%%
 
 
 def custom_tokenizer(review_in):
@@ -128,8 +78,8 @@ def remove_stops(review_in):
     
     from nltk.corpus import stopwords
     
-    stopwords = nltk.corpus.stopwords.words('english')
-    reviews_token_stop = [word for word in review_in if word not in stopwords] 
+    stopwords_eng = stopwords.words('english')
+    reviews_token_stop = [word for word in review_in if word not in stopwords_eng] 
     
     return reviews_token_stop
 
@@ -161,25 +111,34 @@ def remove_punct(review_in):
     return reviews_token_dots
 
 
+def joiner(review_in):
+    return ' '.join(review_in) 
 
-demo_eel = reviews_df.iloc[0:500, :]
+#%%
+
+demo_eel = reviews_df.iloc[: , :]
 demo_eel['tokens'] = demo_eel.Review_text.apply(lambda x: custom_tokenizer(x))
 demo_eel['tokens'] = demo_eel.tokens.apply(lambda x: remove_stops(x))
 demo_eel['tokens'] = demo_eel.tokens.apply(lambda x: lemmatize(x))
+demo_eel['tokens'] = demo_eel.tokens.apply(lambda x: remove_punct(x))
+demo_eel['tokens_joined'] = demo_eel.tokens.apply(lambda x: joiner(x))
 
-demo_eel['tokens2'] = demo_eel.tokens.apply(lambda x: remove_punct(x))
+#%%
+
+sample = demo_eel.tokens_joined.iloc[0:5]
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# Vectorize training and testing data
+# Train vectorizor using the parameters from our gridsearch
+tfidf= TfidfVectorizer(binary=True, norm='l1')
+test = tfidf.fit_transform(sample)
+
+x=pd.DataFrame(test.toarray(), columns=tfidf.get_feature_names())
 
 
+tfidf.get_feature_names()
+#%%
 
-
-
-
-
-
-
-
-
-
-
-
-
+print(tfidf.get_feature_names()[2])
+test.toarray()[:,2]
