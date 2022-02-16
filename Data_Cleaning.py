@@ -85,7 +85,7 @@ def remove_stops(review_in):
 
 
 
-def lemmatize(review_in):
+def custom_lemmatizer(review_in):
     
     from nltk.stem import WordNetLemmatizer
     
@@ -111,6 +111,15 @@ def remove_punct(review_in):
     return reviews_token_dots
 
 
+def number_remover(review_in):
+    
+    #Remove all numbers, and words beginning with numbers (eg, 9am)
+    import re
+    reviews_numbers = [re.sub(r'[\d]+[\w]+', '', word) for word in review_in] 
+    
+    return reviews_numbers
+
+
 def joiner(review_in):
     return ' '.join(review_in) 
 
@@ -119,13 +128,16 @@ def joiner(review_in):
 demo_eel = reviews_df.iloc[: , :]
 demo_eel['tokens'] = demo_eel.Review_text.apply(lambda x: custom_tokenizer(x))
 demo_eel['tokens'] = demo_eel.tokens.apply(lambda x: remove_stops(x))
-demo_eel['tokens'] = demo_eel.tokens.apply(lambda x: lemmatize(x))
+demo_eel['tokens'] = demo_eel.tokens.apply(lambda x: custom_lemmatizer(x))
 demo_eel['tokens'] = demo_eel.tokens.apply(lambda x: remove_punct(x))
+demo_eel['tokens'] = demo_eel.tokens.apply(lambda x: number_remover(x))
+
+
 demo_eel['tokens_joined'] = demo_eel.tokens.apply(lambda x: joiner(x))
 
 #%%
 
-sample = demo_eel.tokens_joined.iloc[0:5]
+sample = demo_eel.tokens_joined.iloc[0:250]
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -137,8 +149,50 @@ test = tfidf.fit_transform(sample)
 x=pd.DataFrame(test.toarray(), columns=tfidf.get_feature_names())
 
 
-tfidf.get_feature_names()
+names = tfidf.get_feature_names()
 #%%
 
-print(tfidf.get_feature_names()[2])
-test.toarray()[:,2]
+
+y=x.sum()
+
+
+
+#%%
+
+from nltk.tag import pos_tag
+
+sentence = ' '.join(names)
+tagged_sent = pos_tag(sentence.split())
+# [('Michael', 'NNP'), ('Jackson', 'NNP'), ('likes', 'VBZ'), ('to', 'TO'), ('eat', 'VB'), ('at', 'IN'), ('McDonalds', 'NNP')]
+
+propernouns = [word for word,pos in tagged_sent if pos == 'NNP']
+# ['Michael','Jackson', 'McDonalds']
+
+exceptions = ['barber', 'keyboard', 'keycard', 'slumber', 'uber', 'yoga']
+
+
+
+#%%
+
+
+test_sample = [sample.iloc[4]]
+
+
+
+    
+
+
+number_remover(test_sample)
+
+
+
+
+
+
+
+
+
+
+
+
+
