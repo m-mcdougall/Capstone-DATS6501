@@ -27,6 +27,8 @@ os.chdir(wd)
 # Import the city's Hotels and Reviews
 
 city_id = 'g35394'
+city_id = 'g28970'
+
 
 hotels_file = 'Hotels_' + city_id + '.csv'
 reviews_file = 'Reviews_' + city_id + '.csv'
@@ -99,7 +101,7 @@ def remove_punct(review_in):
     
     #Remove punctuation
     import string
-    punc = string.punctuation + '’' + "”" + "“" + '…'
+    punc = string.punctuation + '’' + "”" + "“" + '…' 
     reviews_token_pun = [word for word in review_in if word not in punc]
     
     
@@ -116,6 +118,7 @@ def number_remover(review_in):
     #Remove all numbers, and words beginning with numbers (eg, 9am)
     import re
     reviews_numbers = [re.sub(r'[\d]+[\w]+', '', word) for word in review_in] 
+    reviews_numbers = [re.sub(r'[\_]', '', word) for word in reviews_numbers] 
     
     return reviews_numbers
 
@@ -137,7 +140,7 @@ demo_eel['tokens_joined'] = demo_eel.tokens.apply(lambda x: joiner(x))
 
 #%%
 
-sample = demo_eel.tokens_joined.iloc[0:250]
+sample = demo_eel.tokens_joined#.iloc[0:250]
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -146,7 +149,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 tfidf= TfidfVectorizer(binary=True, norm='l1')
 test = tfidf.fit_transform(sample)
 
-x=pd.DataFrame(test.toarray(), columns=tfidf.get_feature_names())
+#x=pd.DataFrame(test.toarray(), columns=tfidf.get_feature_names())
 
 
 names = tfidf.get_feature_names()
@@ -163,29 +166,20 @@ from nltk.tag import pos_tag
 
 sentence = ' '.join(names)
 tagged_sent = pos_tag(sentence.split())
-# [('Michael', 'NNP'), ('Jackson', 'NNP'), ('likes', 'VBZ'), ('to', 'TO'), ('eat', 'VB'), ('at', 'IN'), ('McDonalds', 'NNP')]
 
 propernouns = [word for word,pos in tagged_sent if pos == 'NNP']
-# ['Michael','Jackson', 'McDonalds']
 
-exceptions = ['barber', 'keyboard', 'keycard', 'slumber', 'uber', 'yoga']
+
+exceptions = ['barber', 'keyboard', 'keycard', 'slumber', 'uber', 'yoga', 'kichenette', 'rubber', 'somber',
+              'yogurt', 'zombie', 'invoice', ]
 
 
 
 #%%
 
 
-test_sample = [sample.iloc[4]]
 
-
-
-    
-
-
-number_remover(test_sample)
-
-
-
+small_sample = demo_eel.iloc[0:250]
 
 
 
