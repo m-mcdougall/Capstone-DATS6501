@@ -66,6 +66,9 @@ hotels_df=hotels_df.join(review_stats_sem, on='hotel_ID')
 
 
 def custom_tokenizer(review_in):
+    """
+    Tokenizes the sentences usung a casual tokenizer, lowercases
+    """
 
     from nltk.tokenize.casual import casual_tokenize
     
@@ -77,7 +80,9 @@ def custom_tokenizer(review_in):
 
 
 def remove_stops(review_in):
-    
+    """
+    Removes stopwords from tokenized sentences
+    """
     from nltk.corpus import stopwords
     
     stopwords_eng = stopwords.words('english')
@@ -88,7 +93,9 @@ def remove_stops(review_in):
 
 
 def custom_lemmatizer(review_in):
-    
+    """
+    Lemmatizes all tokens
+    """
     from nltk.stem import WordNetLemmatizer
     
     lemmatizer = WordNetLemmatizer()
@@ -98,7 +105,9 @@ def custom_lemmatizer(review_in):
 
 
 def remove_punct(review_in):
-    
+    """
+    Replaces special characters and removes punctuation from all tokens
+    """
     #Remove punctuation
     import string
     punc = string.punctuation + '’' + "”" + "“" + '…' + 's'
@@ -114,7 +123,9 @@ def remove_punct(review_in):
 
 
 def number_remover(review_in):
-    
+    """
+    Removes isolated numbers that are not dates, and number-word fragments (eg 10am, 2f) 
+    """
     #Remove all numbers, and words beginning with numbers (eg, 9am)
     import re
     reviews_numbers = [re.sub(r'[\d]+[\w]?', '', word) for word in review_in] 
@@ -124,25 +135,131 @@ def number_remover(review_in):
 
 
 def joiner(review_in, join_with = ' '):
+    """
+    Joins tokens into one string for parsing
+    """
     return join_with.join(review_in) 
 
 #%%
 
-demo_eel = reviews_df.iloc[:1000 , :].copy()
-demo_eel['tokens'] = demo_eel.Review_text.apply(lambda x: custom_tokenizer(x))
-demo_eel['tokens'] = demo_eel.tokens.apply(lambda x: remove_stops(x))
-demo_eel['tokens'] = demo_eel.tokens.apply(lambda x: custom_lemmatizer(x))
-demo_eel['tokens'] = demo_eel.tokens.apply(lambda x: number_remover(x))
-demo_eel['tokens'] = demo_eel.tokens.apply(lambda x: remove_punct(x))
+## Tokenize and parse the Reviews
 
-demo_eel['tokens_joined'] = demo_eel.tokens.apply(lambda x: joiner(x, join_with=','))
+reviews_df['tokens'] = reviews_df.Review_text.apply(lambda x: custom_tokenizer(x))
+reviews_df['tokens'] = reviews_df.tokens.apply(lambda x: remove_stops(x))
+reviews_df['tokens'] = reviews_df.tokens.apply(lambda x: custom_lemmatizer(x))
+reviews_df['tokens'] = reviews_df.tokens.apply(lambda x: number_remover(x))
+reviews_df['tokens'] = reviews_df.tokens.apply(lambda x: remove_punct(x))
+
+reviews_df['tokens_joined'] = reviews_df.tokens.apply(lambda x: joiner(x, join_with=','))
+
+
+#%%
+
+
+def date_splitter(df_in, column_in):
+    """
+    Splits the captured date columns in the reviews. 
+    Needs to run twice, once for the review date column and once for the date of stay column, as they
+    are parsed differently.
+    """
+    
+    
+    import datetime
+    
+    if column_in == 'Review_date':
+        
+        prefix = 'Review'
+        month_abbrev = '%b'
+        
+    elif column_in == 'Review_stay_date':
+        
+        prefix = 'Stay'
+        month_abbrev = '%B'
+        
+    else:
+        raise ValueError('Incorrect column')
+        
+    
+    df_in[column_in].replace('Today', 'Feb 2022', inplace=True)
+    df_in[column_in].replace('Yesterday', 'Feb 2022', inplace=True)
+    
+    #Split review date into month and year
+    new=df_in[column_in].str.split(' ', expand = True)
+    months = new[0]
+    year = new[1]
+    
+    #Reviews from the current month have the day, rather than the year. Convert to correct year (2022)
+    year.replace(to_replace = r'\b[\d][\d]?\b', regex=True, value = 2022, inplace=True)
+    year = year.astype(int)
+    
+    #Convert Months from abbreviation to integer
+    months = months.apply(lambda x: datetime.datetime.strptime(x, month_abbrev).month)
+    
+    #Add Years and months to dataframe
+    df_in[prefix+'_Year'] = year
+    df_in[prefix+'_Month'] = months
+                                          
+    #Index if the Review was written pre-pandemic
+    df_in[prefix+'_PrePandemic'] = ((year<2020)|((year==2020) & (months<2)))
+
+
+    return df_in
+
+
+
+#%%
+
+#Split the dates
+reviews_df=date_splitter(reviews_df, 'Review_date')
+reviews_df=date_splitter(reviews_df, 'Review_stay_date')
+
+
+#%%
+
+
+def location_calculator(df_in, column_in):
+    """
+    Calculates the number of locations per distance - not an exact value, but extrapolation
+    Works for 'hotel_location_food' and 'hotel_location_attract'
+    """
+    
+    if column_in not in ['hotel_location_food', 'hotel_location_attract']:
+        raise ValueError('Incorrect column')
+    
+    
+    #Replace the 0 value so that they parse correctly (still calculates to 0)    
+    df_in[column_in] = df_in[column_in].str.replace(r'^0$', '0 within 1 miles', regex=True)
+    
+    #Split the text and parse as values
+    new = df_in[column_in].str.split(' within ', expand = True)
+    locations = new[0]
+    distance = new[1]
+    distance = distance.str.replace(' miles', '')
+    
+    #Calculate the locations per distance
+    relative = locations.astype(float)/distance.astype(float)
+    
+    #Return results
+    df_in[column_in+'_calc'] = relative
+    return df_in
+    
+
+
+#%%
+
+#Calculate the relaive location density
+hotels_df=location_calculator(hotels_df, 'hotel_location_food')
+hotels_df=location_calculator(hotels_df, 'hotel_location_attract')
+
+
+
 
 #%%
 sample = demo_eel.tokens_joined.iloc[0:550]
 
 from sklearn.feature_extraction.text import CountVectorizer
 
-cv= CountVectorizer(ngram_range=(1,3), token_pattern = r'[\w\']+',max_features=10000)
+cv= CountVectorizer(ngram_range=(1,2), token_pattern = r'[\w\']+', max_features=10000, strip_accents='ascii')
 
 word_count_vector=cv.fit_transform(sample)
 
@@ -152,42 +269,6 @@ from sklearn.feature_extraction.text import TfidfTransformer
 tfidf_transformer=TfidfTransformer(smooth_idf=True,use_idf=True)
 tfidf_transformer.fit(word_count_vector)
 
-
-
-
-#%%
-sample = demo_eel.tokens_joined#.iloc[0:250]
-
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-# Vectorize training and testing data
-# Train vectorizor using the parameters from our gridsearch
-tfidf= TfidfVectorizer(binary=True, norm='l1')
-test = tfidf.fit_transform(sample)
-
-#x=pd.DataFrame(test.toarray(), columns=tfidf.get_feature_names())
-
-
-names = tfidf.get_feature_names()
-#%%
-
-
-#y=x.sum()
-
-
-
-#%%
-
-from nltk.tag import pos_tag
-
-sentence = ' '.join(names)
-tagged_sent = pos_tag(sentence.split())
-
-propernouns = [word for word,pos in tagged_sent if pos == 'NNP']
-
-
-exceptions = ['barber', 'keyboard', 'keycard', 'slumber', 'uber', 'yoga', 'kichenette', 'rubber', 'somber',
-              'yogurt', 'zombie', 'invoice', ]
 
 
 
@@ -222,7 +303,7 @@ def extract_topn_from_vector(feature_names, sorted_items, topn=10):
 # you only needs to do this once, this is a mapping of index to 
 feature_names=cv.get_feature_names()
 # get the document that we want to extract keywords from
-doc= list(demo_eel.tokens_joined.iloc[560:600].array)
+doc= list(demo_eel.tokens_joined.iloc[150:600].array)
 #generate tf-idf for the given document
 tf_idf_vector=tfidf_transformer.transform(cv.transform(doc))
 #sort the tf-idf vectors by descending order of scores
@@ -247,6 +328,12 @@ tf_idf_vector=tfidf_transformer.transform(cv.transform(doc))
 
 #%%
 
-x=demo_eel.iloc[560:600,:]
+
+
+
+
+
+
+
 
 
