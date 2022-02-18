@@ -24,46 +24,9 @@ os.chdir(wd)
 
 #%%
 
-# Import the city's Hotels and Reviews
-
-city_id = 'g35394'
-city_id = 'g35805'
-
-
-hotels_file = 'Hotels_' + city_id + '.csv'
-reviews_file = 'Reviews_' + city_id + '.csv'
-
-hotels_df = pd.read_csv(wd+'\\Data\\'+hotels_file)
-reviews_df = pd.read_csv(wd+'\\Data\\'+reviews_file)
-
-
-#%%
-
-# Basic statistics on the review ratings
-
-reviews_df.Review_rating.unique()
-
-
-reviews_df.groupby('Hotel_ID').Review_rating.mean().head()
-
-review_stats_count = reviews_df.groupby('Hotel_ID').Review_rating.count().rename('Number_reviews')
-review_stats_mean = reviews_df.groupby('Hotel_ID').Review_rating.mean().rename('Review_rating_mean')
-review_stats_std = reviews_df.groupby('Hotel_ID').Review_rating.std().rename('Review_rating_std')
-review_stats_sem = reviews_df.groupby('Hotel_ID').Review_rating.sem().rename('Review_rating_sem')
-
-#%%
-
-# Merge each hotel's calculated metrics into the main dataframe
-
-hotels_df=hotels_df.join(review_stats_count, on='hotel_ID')
-hotels_df=hotels_df.join(review_stats_mean, on='hotel_ID')
-hotels_df=hotels_df.join(review_stats_std, on='hotel_ID')
-hotels_df=hotels_df.join(review_stats_sem, on='hotel_ID')
-
-
-#%%
-
-
+##
+#  NLP Token Parsing Functions
+##  
 
 def custom_tokenizer(review_in):
     """
@@ -104,6 +67,7 @@ def custom_lemmatizer(review_in):
     return reviews_token_lem
 
 
+
 def remove_punct(review_in):
     """
     Replaces special characters and removes punctuation from all tokens
@@ -122,6 +86,7 @@ def remove_punct(review_in):
     return reviews_token_dots
 
 
+
 def number_remover(review_in):
     """
     Removes isolated numbers that are not dates, and number-word fragments (eg 10am, 2f) 
@@ -134,32 +99,19 @@ def number_remover(review_in):
     return reviews_numbers
 
 
+
 def joiner(review_in, join_with = ' '):
     """
     Joins tokens into one string for parsing
     """
     return join_with.join(review_in) 
 
-#%%
-
-## Fill Na Review Titles
-reviews_df['Review_title'].fillna('', inplace=True)
-
-## Combine the Review title and the Text
-reviews_df['tokens'] = reviews_df['Review_title']+' . '+reviews_df['Review_text'] 
 
 
-## Tokenize and parse the Reviews
-reviews_df['tokens'] = reviews_df.tokens.apply(lambda x: custom_tokenizer(x))
-reviews_df['tokens'] = reviews_df.tokens.apply(lambda x: remove_stops(x))
-reviews_df['tokens'] = reviews_df.tokens.apply(lambda x: custom_lemmatizer(x))
-reviews_df['tokens'] = reviews_df.tokens.apply(lambda x: number_remover(x))
-reviews_df['tokens'] = reviews_df.tokens.apply(lambda x: remove_punct(x))
 
-reviews_df['tokens_joined'] = reviews_df.tokens.apply(lambda x: joiner(x, join_with=','))
-
-
-#%%
+##
+#  Data Management Functions
+## 
 
 
 def date_splitter(df_in, column_in):
@@ -213,16 +165,6 @@ def date_splitter(df_in, column_in):
 
 
 
-#%%
-
-#Split the dates
-reviews_df=date_splitter(reviews_df, 'Review_date')
-reviews_df=date_splitter(reviews_df, 'Review_stay_date')
-
-
-#%%
-
-
 def location_calculator(df_in, column_in):
     """
     Calculates the number of locations per distance - not an exact value, but extrapolation
@@ -251,6 +193,84 @@ def location_calculator(df_in, column_in):
     
 
 
+
+
+#%%
+
+
+#########
+#
+#  Parse a City's Hotel Reviews
+#  Calculate stats, clean text and save to file.
+#
+########
+
+
+# Import the city's Hotels and Reviews
+
+city_id = 'g35394'
+city_id = 'g35805'
+
+
+hotels_file = 'Hotels_' + city_id + '.csv'
+reviews_file = 'Reviews_' + city_id + '.csv'
+
+hotels_df = pd.read_csv(wd+'\\Data\\'+hotels_file)
+reviews_df = pd.read_csv(wd+'\\Data\\'+reviews_file)
+
+
+#%%
+
+# Basic statistics on the review ratings
+
+reviews_df.Review_rating.unique()
+
+
+reviews_df.groupby('Hotel_ID').Review_rating.mean().head()
+
+review_stats_count = reviews_df.groupby('Hotel_ID').Review_rating.count().rename('Number_reviews')
+review_stats_mean = reviews_df.groupby('Hotel_ID').Review_rating.mean().rename('Review_rating_mean')
+review_stats_std = reviews_df.groupby('Hotel_ID').Review_rating.std().rename('Review_rating_std')
+review_stats_sem = reviews_df.groupby('Hotel_ID').Review_rating.sem().rename('Review_rating_sem')
+
+#%%
+
+# Merge each hotel's calculated metrics into the main dataframe
+
+hotels_df=hotels_df.join(review_stats_count, on='hotel_ID')
+hotels_df=hotels_df.join(review_stats_mean, on='hotel_ID')
+hotels_df=hotels_df.join(review_stats_std, on='hotel_ID')
+hotels_df=hotels_df.join(review_stats_sem, on='hotel_ID')
+
+
+#%%
+
+
+## Fill Na Review Titles
+reviews_df['Review_title'].fillna('', inplace=True)
+
+## Combine the Review title and the Text
+reviews_df['tokens'] = reviews_df['Review_title']+' . '+reviews_df['Review_text'] 
+
+
+## Tokenize and parse the Reviews
+reviews_df['tokens'] = reviews_df.tokens.apply(lambda x: custom_tokenizer(x))
+reviews_df['tokens'] = reviews_df.tokens.apply(lambda x: remove_stops(x))
+reviews_df['tokens'] = reviews_df.tokens.apply(lambda x: custom_lemmatizer(x))
+reviews_df['tokens'] = reviews_df.tokens.apply(lambda x: number_remover(x))
+reviews_df['tokens'] = reviews_df.tokens.apply(lambda x: remove_punct(x))
+
+reviews_df['tokens_joined'] = reviews_df.tokens.apply(lambda x: joiner(x, join_with=','))
+
+
+#%%
+
+#Split the dates
+reviews_df=date_splitter(reviews_df, 'Review_date')
+reviews_df=date_splitter(reviews_df, 'Review_stay_date')
+
+
+
 #%%
 
 #Calculate the relaive location density
@@ -258,10 +278,6 @@ hotels_df=location_calculator(hotels_df, 'hotel_location_food')
 hotels_df=location_calculator(hotels_df, 'hotel_location_attract')
 
 
-
-#%%
-
-sample = reviews_df.iloc[0:250]
 
 #%%
 
@@ -279,5 +295,6 @@ reviews_df.to_pickle(wd+'\\Data\\Cleaned\\'+reviews_file[0:-4]+'.pkl')
 
 
 
+#sample = reviews_df.iloc[0:250]
 
 
