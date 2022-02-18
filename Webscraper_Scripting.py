@@ -42,9 +42,19 @@ all_cities = [#'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotel
               #'https://www.tripadvisor.com/Hotels-g43323-Minneapolis_Minnesota-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g55229-Nashville_Davidson_County_Tennessee-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g60763-New_York_City_New_York-Hotels.html', # Come back if time allows
-              'https://www.tripadvisor.com/Hotels-g46671-Newark_New_Jersey-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g51560-Oklahoma_City_Oklahoma-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g60795-Philadelphia_Pennsylvania-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g46671-Newark_New_Jersey-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g51560-Oklahoma_City_Oklahoma-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g60795-Philadelphia_Pennsylvania-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g52024-Portland_Oregon-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g40827-Portland_Maine-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g60922-Salt_Lake_City_Utah-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g60946-Providence_Rhode_Island-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g54805-Sioux_Falls_South_Dakota-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g58277-Virginia_Beach_Virginia-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g39143-Wichita_Kansas-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g34059-Wilmington_Delaware-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g33726-Bridgeport_Connecticut-Hotels.html',
               ]
 
 problem_children = []
