@@ -49,13 +49,13 @@ all_cities = [#'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotel
               #'https://www.tripadvisor.com/Hotels-g40827-Portland_Maine-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g60922-Salt_Lake_City_Utah-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g60946-Providence_Rhode_Island-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g54805-Sioux_Falls_South_Dakota-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g58277-Virginia_Beach_Virginia-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g39143-Wichita_Kansas-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g34059-Wilmington_Delaware-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g33726-Bridgeport_Connecticut-Hotels.html',
-              ]
+              #'https://www.tripadvisor.com/Hotels-g54805-Sioux_Falls_South_Dakota-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g58277-Virginia_Beach_Virginia-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g39143-Wichita_Kansas-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g34059-Wilmington_Delaware-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g33726-Bridgeport_Connecticut-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g33851-New_Haven_Connecticut-Hotels.html']
 
 problem_children = []
 
