@@ -389,6 +389,12 @@ def hotel_and_review_scraper(link_hotel):
         review_url_pre = review_url[0:split]
         review_url_post = review_url[split::]
         
+        #Add an upper limit on the number of reviews to download
+        #Eg, individual resorts in vegas have >30 000 reviews each
+        
+        if review_count>4000:
+            review_count = 4000
+        
         
         #Generate addresses in increments of 30
         output = []

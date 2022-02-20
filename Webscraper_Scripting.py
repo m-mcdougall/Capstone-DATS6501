@@ -6,8 +6,9 @@ runfile('C:/Users/Mariko/Documents/GitHub/Capstone-DATS6501/Webscraper.py', wdir
 all_cities = [#'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g60766-Little_Rock_Arkansas-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g33726-Bridgeport_Connecticut-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g49022-Charlotte_North_Carolina-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g34059-Wilmington_Delaware-Hotels.html',
-              #'https://www.tripadvisor.com/Hotels-g32655-Los_Angeles_California-Hotels.html', 
+              'https://www.tripadvisor.com/Hotels-g32655-Los_Angeles_California-Hotels.html', 
               #'https://www.tripadvisor.com/Hotels-g60898-Atlanta_Georgia-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g60864-New_Orleans_Louisiana-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g35394-Boise_Idaho-Hotels.html',
@@ -21,7 +22,7 @@ all_cities = [#'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotel
               #'https://www.tripadvisor.com/Hotels-g31310-Phoenix_Arizona-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g37209-Indianapolis_Indiana-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g37835-Des_Moines_Iowa-Hotels.html',
-              #'https://www.tripadvisor.com/Hotels-g60982-Honolulu_Oahu_Hawaii-Hotels.html',
+              'https://www.tripadvisor.com/Hotels-g60982-Honolulu_Oahu_Hawaii-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g60933-Albuquerque_New_Mexico-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g60745-Boston_Massachusetts-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g54171-Charleston_South_Carolina-Hotels.html',
@@ -35,13 +36,13 @@ all_cities = [#'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotel
               #'https://www.tripadvisor.com/Hotels-g60766-Little_Rock_Arkansas-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g33726-Bridgeport_Connecticut-Hotels.html',
-              #'https://www.tripadvisor.com/Hotels-g45963-Las_Vegas_Nevada-Hotels.html', # Come back if time allows
+              'https://www.tripadvisor.com/Hotels-g45963-Las_Vegas_Nevada-Hotels.html', # Come back if time allows
               #'https://www.tripadvisor.com/Hotels-g32655-Los_Angeles_California-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g39604-Louisville_Kentucky-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g46152-Manchester_New_Hampshire-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g43323-Minneapolis_Minnesota-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g55229-Nashville_Davidson_County_Tennessee-Hotels.html',
-              #'https://www.tripadvisor.com/Hotels-g60763-New_York_City_New_York-Hotels.html', # Come back if time allows
+              'https://www.tripadvisor.com/Hotels-g60763-New_York_City_New_York-Hotels.html', # Come back if time allows
               #'https://www.tripadvisor.com/Hotels-g46671-Newark_New_Jersey-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g51560-Oklahoma_City_Oklahoma-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g60795-Philadelphia_Pennsylvania-Hotels.html',
@@ -55,7 +56,9 @@ all_cities = [#'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotel
               #'https://www.tripadvisor.com/Hotels-g34059-Wilmington_Delaware-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g33726-Bridgeport_Connecticut-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g33851-New_Haven_Connecticut-Hotels.html']
+              #'https://www.tripadvisor.com/Hotels-g33851-New_Haven_Connecticut-Hotels.html'
+              'https://www.tripadvisor.com/Hotels-g34438-Miami_Florida-Hotels.html',
+              ]
 
 problem_children = []
 

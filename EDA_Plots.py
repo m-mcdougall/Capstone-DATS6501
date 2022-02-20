@@ -24,6 +24,10 @@ os.chdir(wd)
 
 #%%
 
+###
+# Load in all Hotels
+###
+
 #Loop through all cities - Collect all Hotels
 all_files = os.listdir(wd+'\\Data\\Cleaned\\')
 all_cities = [file for file in all_files if '.pkl' in file and 'Hotels' in file]
@@ -31,13 +35,22 @@ all_cities = [file for file in all_files if '.pkl' in file and 'Hotels' in file]
 hotels = []
 for city in all_cities:
     hotels_file =  pd.read_pickle(wd+'\\Data\\Cleaned\\'+city)
+    
+    #Drop some columns to make the dataframe a bit lighter
+    hotels_file.drop(['hotel_city','hotel_blurb', 'hotel_prop_amenity',
+                      'hotel_room_amenity','hotel_location_food', 'hotel_location_attract'], 
+                     axis=1, inplace=True)
+    
     hotels.append(hotels_file)
-
 
 hotels_df = pd.concat(hotels)
 
-#%%
+#Delete intermediaries to free up memory
+del all_files, all_cities, city, hotels, hotels_file
 
+
+
+## Engineer the state from the address
 
 #Split the address by commas
 new = hotels_df.hotel_address.str.split(',')
@@ -51,8 +64,49 @@ new = new.str.replace(r'[ ]', '', regex=True)
 #Rejoin to the dataframe
 hotels_df['State'] = new
 
+#%%
+
+###
+# Load in all Reviews
+###
+
+#Loop through all cities - Collect all Hotels
+all_files = os.listdir(wd+'\\Data\\Cleaned\\')
+all_cities = [file for file in all_files if '.pkl' in file and 'Reviews' in file]
+
+hotels = []
+for city in tqdm(all_cities):
+    hotels_file =  pd.read_pickle(wd+'\\Data\\Cleaned\\'+city)
+    
+    #Drop some columns to make the dataframe a bit lighter
+    hotels_file.drop(['Review_date', 'Reviewer_loc','Review_stay_date', 'Review_title', 'Review_text',], 
+                     axis=1, inplace=True)
+        
+    hotels.append(hotels_file)
+
+#Merge into one dataframe
+reviews_df = pd.concat(hotels)
+reviews_df.rename({'Hotel_ID':'hotel_ID'}, axis=1, inplace=True)
+
+#Delete intermediaries to free up memory
+del all_files, all_cities, city, hotels, hotels_file
+
+
+## Merge the staes to the Reviews
+
+
+#Get the states 
+state_df = hotels_df.filter(['hotel_ID', 'State']).copy()
+
+#Merge the states into each review, for grouping.
+reviews_df = reviews_df.merge(state_df, on = 'hotel_ID')
+
+#Get a sample, because you canot open the full dataset
+sample = reviews_df.sample(n=100)
 
 #%%
+
+#Start looking at basic EDA
 
 hotels_state_unique=hotels_df.groupby('State').nunique()
 hotels_state_sum=hotels_df.groupby('State').sum()
@@ -89,6 +143,7 @@ import matplotlib.patheffects as PathEffects
 from matplotlib.colors import Normalize
 import matplotlib
 from matplotlib import cm
+from matplotlib.lines import Line2D
 
 
 def check_color(hotel_count):
@@ -132,7 +187,7 @@ for ax in [ax_us, ax_ak, ax_hi]:
 
 #Add Title
 title_str='Number of Unique Hotels Scraped per State\nMost Populous City in each State Scraped'
-ax_us.set_title(title_str)
+ax_us.set_title(title_str, fontsize=15)
 
 
 #Loop through each state and paint the borders and facecolor according to the RGBA values we calculated
@@ -170,14 +225,20 @@ for astate in shpreader.Reader(states_shp).records():
                       facecolor='grey', edgecolor='white')
 
 
-#Add stand-alone colourbar to show the direction of the gradient
-#c_map_ax = fig.add_axes([0.91, 0.33, 0.01, 0.36])
-#c_map_ax.axes.get_xaxis().set_visible(False)
-#c_map_ax.axes.get_yaxis().set_visible(False)
-#matplotlib.colorbar.ColorbarBase(c_map_ax, cmap='coolwarm', orientation = 'vertical')
-
+## Create a custom legend for the colours
+#Put the colours here
+custom_lines = [Line2D([0], [0], color='#581845', lw=0, marker='s', markersize=10),
+                Line2D([0], [0], color='#900C3F', lw=0, marker='s', markersize=10),
+                Line2D([0], [0], color='#C70039', lw=0, marker='s', markersize=10),
+                Line2D([0], [0], color='#FF5733', lw=0, marker='s', markersize=10),
+                Line2D([0], [0], color='Grey', lw=0, marker='s', markersize=10),]
+#Display legend
+ax_us.legend(custom_lines, ['0-50', '50-100', '100-150', '150+', 'Unknown'],
+             loc='right', fontsize=12, frameon=False)
 
 plt.show()
+
+
 
 
 
@@ -227,7 +288,7 @@ for ax in [ax_us, ax_ak, ax_hi]:
 
 #Add Title
 title_str='Total Reviews Scraped per State\nMost Populous City in each State Scraped'
-ax_us.set_title(title_str)
+ax_us.set_title(title_str, fontsize=15)
 
 
 #Loop through each state and paint the borders and facecolor according to the RGBA values we calculated
@@ -265,13 +326,71 @@ for astate in shpreader.Reader(states_shp).records():
                       facecolor='grey', edgecolor='white')
 
 
-#Add stand-alone colourbar to show the direction of the gradient
-#c_map_ax = fig.add_axes([0.91, 0.33, 0.01, 0.36])
-#c_map_ax.axes.get_xaxis().set_visible(False)
-#c_map_ax.axes.get_yaxis().set_visible(False)
-#matplotlib.colorbar.ColorbarBase(c_map_ax, cmap='coolwarm', orientation = 'vertical')
 
+## Create a custom legend for the colours
+#Put the colours here
+custom_lines = [Line2D([0], [0], color='#581845', lw=0, marker='s', markersize=10),
+                Line2D([0], [0], color='#900C3F', lw=0, marker='s', markersize=10),
+                Line2D([0], [0], color='#C70039', lw=0, marker='s', markersize=10),
+                Line2D([0], [0], color='#FF5733', lw=0, marker='s', markersize=10),
+                Line2D([0], [0], color='Grey', lw=0, marker='s', markersize=10),]
+#Display legend
+ax_us.legend(custom_lines, ['0-50k', '50-100k', '100-150k', '150k+', 'Unknown'],
+             loc='right', fontsize=12, frameon=False)
 
 plt.show()
+
+
+#0:'#581845', 50000:'#900C3F', 100000:'#C70039',150000:'#FF5733'
+
+
+
+#%%
+
+
+x=reviews_df.groupby('State').mean()
+state_mean_review = x.Review_rating.rename('Review_rating_mean')
+
+
+x=reviews_df.groupby('State').std()
+state_std_review = x.Review_rating.rename('Review_rating_std')
+
+
+x=reviews_df.groupby('State').sem()
+state_sem_review = x.Review_rating.rename('Review_rating_sem')
+
+#%%
+
+x=reviews_df.groupby(['State', 'Stay_PrePandemic']).mean().Review_rating.reset_index(name='Stay_PrePandemic')
+
+pre_x = x[x.Stay_PrePandemic ==True]
+pre_x = pre_x.set_index('State')
+
+post_x = x[x.Stay_PrePandemic ==False]
+post_x = post_x.set_index('State')
+
+pre_x.Review_rating - post_x.Review_rating
+
+
+#%%
+
+x.pivot('Stay_PrePandemic')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
