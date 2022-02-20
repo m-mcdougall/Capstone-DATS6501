@@ -361,12 +361,13 @@ state_sem_review = x.Review_rating.rename('Review_rating_sem')
 
 #%%
 
-x=reviews_df.groupby(['State', 'Stay_PrePandemic']).mean().Review_rating.reset_index(name='Stay_PrePandemic')
+pandemic_review_mean=reviews_df.groupby(['State', 'Stay_PrePandemic']).mean().Review_rating
+pandemic_review_mean=pandemic_review_mean.reset_index()
 
-pre_x = x[x.Stay_PrePandemic ==True]
+pre_x = pandemic_review_mean[pandemic_review_mean.Stay_PrePandemic ==True]
 pre_x = pre_x.set_index('State')
 
-post_x = x[x.Stay_PrePandemic ==False]
+post_x = pandemic_review_mean[pandemic_review_mean.Stay_PrePandemic ==False]
 post_x = post_x.set_index('State')
 
 pre_x.Review_rating - post_x.Review_rating
@@ -374,23 +375,147 @@ pre_x.Review_rating - post_x.Review_rating
 
 #%%
 
-x.pivot('Stay_PrePandemic')
+
+sns.barplot(x=hotels_state_mean.index, y=hotels_state_mean.Review_rating_mean, )
+plt.title('Mean review Value')
+plt.show()
+
+sns.barplot(x=state_mean_review.index, y=state_mean_review )
+plt.title('Mean review Value')
+plt.show()
+
+
+
+#%%
+
+# Plot the mean and STD review rating by state
+
+
+fig = plt.figure(figsize=(14, 8))
+state_order =list(reviews_df.State.unique());state_order.sort()
+sns.barplot(data = reviews_df, x='State', y='Review_rating',order=state_order, ci='sd')
+plt.ylim(0,5)
+
+plt.title('Mean Review Rating by State', fontsize=15)
+plt.ylabel('Review Rating')
+plt.show()
+
+
+#%%
+
+#Plot both pre and post pandemic, but looks pretty bad. Going with a delta instead.
+fig = plt.figure(figsize=(18, 8))
+state_order =list(reviews_df.State.unique());state_order.sort()
+sns.catplot(data = reviews_df, x='State', y='Review_rating', hue='Stay_PrePandemic',
+            order=state_order, ci='sd', kind='bar',
+            height = 5, aspect=3)
+plt.title('Mean Review Rating by State', fontsize=15)
+plt.show()
+#%%
+
+#Calculate the Delta in Reviews pre-and post pandemic
+pandemic_review_mean=reviews_df.groupby(['State', 'Stay_PrePandemic']).mean().Review_rating
+pandemic_review_mean=pandemic_review_mean.reset_index()
+pandemic_review_mean=pandemic_review_mean.pivot(index='State', columns='Stay_PrePandemic')['Review_rating']
+pandemic_review_mean["Change_in_Review"] = pandemic_review_mean[False] - pandemic_review_mean[True]
+
+
+
+#Create the normalized gradient centered on the zero between the max and negative max
+#Find the max distance from 0 
+
+norm = Normalize(vmin=-1, vmax=1)
+color_vals=[cm.jet(norm(val),) for val in pandemic_review_mean.Change_in_Review ]
+
+
+#Add a column to the dataframe for the RGBA values we calculated
+pandemic_review_mean['color'] = color_vals
 
 
 
 
 
+#Initialize the figure
+fig = plt.figure(figsize=(11, 8))
+
+#Center the main map on the US
+ax_us = fig.add_axes([0, 0, 1, 1], projection=ccrs.LambertConformal())
+ax_us.set_extent([-125, -66.5, 20, 50], ccrs.Geodetic())
+
+
+## Add in Alaska Subplot
+ax_ak = fig.add_axes([0.01, 0.15, 0.28, 0.20], projection=ccrs.PlateCarree())
+ax_ak.set_extent([-169, -130, 53, 71],  crs=ccrs.PlateCarree()) #Set lat and logitiude to display
+
+
+## Add in Hawaii Subplot      
+ax_hi = fig.add_axes([0.01, 0.35, 0.15, 0.15], projection=ccrs.PlateCarree())
+ax_hi.set_extent([-161, -154, 23, 18],  crs=ccrs.PlateCarree())#Set lat and logitiude
+
+
+#Load the shapefile, and the correct borders
+shapename = 'admin_1_states_provinces_lakes_shp'
+states_shp = shpreader.natural_earth(resolution='110m',
+                                     category='cultural', name=shapename)
+
+
+#Set the background colors/visibility
+for ax in [ax_us, ax_ak, ax_hi]:
+    ax.outline_patch.set_visible(False)  
+    ax.background_patch.set_visible(True)
+    #ax.background_patch.set_facecolor('blue')
+
+
+#Add Title
+title_str='Change in Average Review Score During the Pandemic\nMost Populous City in each State Scraped'
+ax_us.set_title(title_str, fontsize=15)
+
+
+#Loop through each state and paint the borders and facecolor according to the RGBA values we calculated
+for astate in shpreader.Reader(states_shp).records():
+    try:
+        #Get hotel info and colour for the state
+        state_abbrev = astate.attributes['postal']
+        
+        
+        if state_abbrev == "AK":
+            hotel_color = pandemic_review_mean.loc['AK','color']
+            ax_ak.add_geometries([astate.geometry], ccrs.PlateCarree(),
+                      facecolor=hotel_color, edgecolor='white')
+        elif state_abbrev == "HI":
+            #hotel_color = pandemic_review_mean.loc['HI','color']
+            ax_hi.add_geometries([astate.geometry], ccrs.PlateCarree(),
+                      facecolor='grey', edgecolor='white')
+        else:
+            hotel_color = pandemic_review_mean.loc[state_abbrev,'color']
+            ax_us.add_geometries([astate.geometry], ccrs.PlateCarree(),
+                          facecolor=hotel_color, edgecolor='white')
+    except:
+        #This may be a territory, or a state which has not stations(eg, RI)
+        ax_us.add_geometries([astate.geometry], ccrs.PlateCarree(),
+                          facecolor='grey', edgecolor='white')
+        print(f'{state_abbrev}: SKIPPED')
+        pass
+    
+
+
+
+##NOTE: This is just needed until HI data comes in
+## DELETE AFTER DONE
+for astate in shpreader.Reader(states_shp).records():
+    if astate.attributes['postal'] == 'HI':
+        ax_hi.add_geometries([astate.geometry], ccrs.PlateCarree(),
+                      facecolor='grey', edgecolor='white')
 
 
 
 
+#Add stand-alone colourbar to show the direction of the gradient
+c_map_ax = fig.add_axes([0.91, 0.33, 0.01, 0.36])
+c_map_ax.axes.get_xaxis().set_visible(False)
+#c_map_ax.axes.get_yaxis().set_visible(False)
+cbar = matplotlib.colorbar.ColorbarBase(c_map_ax, cmap=cm.jet, orientation = 'vertical', ticks=[0, 0.5, 1])
+cbar.ax.set_yticklabels(['-1 Star', '0', '+1 Star'])
 
-
-
-
-
-
-
-
-
+plt.show()
 

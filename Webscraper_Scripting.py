@@ -6,7 +6,7 @@ runfile('C:/Users/Mariko/Documents/GitHub/Capstone-DATS6501/Webscraper.py', wdir
 all_cities = [#'https://www.tripadvisor.com/Hotels-g60880-Anchorage_Alaska-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g60766-Little_Rock_Arkansas-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g33726-Bridgeport_Connecticut-Hotels.html',
-              'https://www.tripadvisor.com/Hotels-g49022-Charlotte_North_Carolina-Hotels.html',
+              #'https://www.tripadvisor.com/Hotels-g49022-Charlotte_North_Carolina-Hotels.html',
               #'https://www.tripadvisor.com/Hotels-g34059-Wilmington_Delaware-Hotels.html',
               'https://www.tripadvisor.com/Hotels-g32655-Los_Angeles_California-Hotels.html', 
               #'https://www.tripadvisor.com/Hotels-g60898-Atlanta_Georgia-Hotels.html',

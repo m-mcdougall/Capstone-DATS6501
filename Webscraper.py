@@ -185,7 +185,7 @@ def city_hotel_links_scraper(url_prefix_in, url_suffix_in):
                     skip_sequential += -1
                 
             print('Got the page. Sleeping...')
-            time.sleep(10)
+            time.sleep(5)
     
     #Convert to set to remove duplicates (Sponsored hotels)
     links_set = list(set(links))
@@ -497,19 +497,34 @@ def hotel_and_review_scraper(link_hotel):
     reviews_pages_2plus = [link_hotel] + gen_review_pages(link_hotel, hotel_reviews)
     
     all_reviews = []
+    stop_scanning = 0
     
     for review_i in tqdm(reviews_pages_2plus):
+        if stop_scanning < 5:
+            
+            if review_i != link_hotel:
+                #Download the page info
+                page = requests.get(review_i, headers=headers)
+                soup = BeautifulSoup(page.content, 'html.parser')
+                #time.sleep(1.24)
         
-        if review_i != link_hotel:
-            #Download the page info
-            page = requests.get(review_i, headers=headers)
-            soup = BeautifulSoup(page.content, 'html.parser')
-            #time.sleep(1.24)
+            reviews_div = soup.find('div', {'id':'component_16'}).find_all('div', {'class':'cWwQK MC R2 Gi z Z BB dXjiy'})
+            
+            #In some cities, the review div is component 17, not 16.
+            if reviews_div == []:
+                 reviews_div = soup.find('div', {'id':'component_17'}).find_all('div', {'class':'cWwQK MC R2 Gi z Z BB dXjiy'})
     
-        reviews_div = soup.find('div', {'id':'component_16'}).find_all('div', {'class':'cWwQK MC R2 Gi z Z BB dXjiy'})
-        
-        
-        all_reviews.append(review_page_collector(reviews_div, hotel_ID))
+    
+            #Check to see if it's still an error
+            if reviews_div == []:
+                #If 5 in a row, stop scanning
+                stop_scanning +=1
+                print('NO DIV FOUND. SKIPPING REVIEW.')
+                
+            else:
+                #Reset the counter, add review to list
+                stop_scanning = 0
+                all_reviews.append(review_page_collector(reviews_div, hotel_ID))
     
     
     all_reviews_flat = flatten_list(all_reviews)
