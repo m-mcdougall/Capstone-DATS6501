@@ -211,7 +211,7 @@ def location_calculator(df_in, column_in):
 # Import the city's Hotels and Reviews
 
 #city_id = 'g35394'
-city_id = 'g60763'
+city_id = 'g60805'
 
 
 hotels_file = 'Hotels_' + city_id + '.csv'

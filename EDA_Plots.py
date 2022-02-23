@@ -115,13 +115,13 @@ hotels_state_mean=hotels_df.groupby('State').mean()
 
 fig = plt.figure(figsize=(14, 6))
 sns.barplot(x=hotels_state_unique.index, y=hotels_state_unique.hotel_ID, )
-plt.title('Unique Hotels')
+plt.title('Total Unique Hotels')
 plt.show()
 
 
 fig = plt.figure(figsize=(14, 6))
 sns.barplot(x=hotels_state_sum.index, y=hotels_state_sum.Number_reviews, )
-plt.title('Total number reviews')
+plt.title('Total Unique Reviews')
 plt.show()
 
 
@@ -252,7 +252,8 @@ custom_lines = [Line2D([0], [0], color='#581845', lw=0, marker='s', markersize=1
                 Line2D([0], [0], color='#900C3F', lw=0, marker='s', markersize=10),
                 Line2D([0], [0], color='#C70039', lw=0, marker='s', markersize=10),
                 Line2D([0], [0], color='#FF5733', lw=0, marker='s', markersize=10),
-                Line2D([0], [0], color='Grey', lw=0, marker='s', markersize=10),]
+                #Line2D([0], [0], color='Grey', lw=0, marker='s', markersize=10),
+                ]
 #Display legend
 ax_us.legend(custom_lines, ['0-50', '50-100', '100-150', '150+', 'Unknown'],
              loc='right', fontsize=12, frameon=False)
@@ -346,7 +347,9 @@ custom_lines = [Line2D([0], [0], color='#581845', lw=0, marker='s', markersize=1
                 Line2D([0], [0], color='#900C3F', lw=0, marker='s', markersize=10),
                 Line2D([0], [0], color='#C70039', lw=0, marker='s', markersize=10),
                 Line2D([0], [0], color='#FF5733', lw=0, marker='s', markersize=10),
-                Line2D([0], [0], color='Grey', lw=0, marker='s', markersize=10),]
+                #Line2D([0], [0], color='Grey', lw=0, marker='s', markersize=10),
+                ]
+
 #Display legend
 ax_us.legend(custom_lines, ['0-50k', '50-100k', '100-150k', '150k+', 'Unknown'],
              loc='right', fontsize=12, frameon=False)
@@ -359,6 +362,8 @@ plt.show()
 
 
 #%%
+
+x=reviews_df.groupby('State').count()
 
 
 x=reviews_df.groupby('State').mean()
@@ -398,7 +403,9 @@ state_order =list(reviews_df.State.unique());state_order.sort()
 sns.catplot(data = reviews_df, x='State', y='Review_rating', hue='Stay_PrePandemic',
             order=state_order, ci='sd', kind='bar',
             height = 5, aspect=3, palette=('muted'))
+
 plt.ylim(0,5)
+plt.ylabel('Review Rating')
 plt.title('Mean Review Rating by State', fontsize=15)
 plt.show()
 #%%
@@ -415,7 +422,7 @@ pandemic_review_mean["Change_in_Review"] = pandemic_review_mean[False] - pandemi
 #Find the max distance from 0 
 
 norm = Normalize(vmin=-1, vmax=1)
-color_vals=[cm.jet(norm(val),) for val in pandemic_review_mean.Change_in_Review ]
+color_vals=[cm.RdYlGn(norm(val),) for val in pandemic_review_mean.Change_in_Review ]
 
 
 #Add a column to the dataframe for the RGBA values we calculated
@@ -471,15 +478,15 @@ for astate in shpreader.Reader(states_shp).records():
         if state_abbrev == "AK":
             hotel_color = pandemic_review_mean.loc['AK','color']
             ax_ak.add_geometries([astate.geometry], ccrs.PlateCarree(),
-                      facecolor=hotel_color, edgecolor='white')
+                      facecolor=hotel_color, edgecolor='grey')
         elif state_abbrev == "HI":
             hotel_color = pandemic_review_mean.loc['HI','color']
             ax_hi.add_geometries([astate.geometry], ccrs.PlateCarree(),
-                      facecolor=hotel_color, edgecolor='white')
+                      facecolor=hotel_color, edgecolor='grey')
         else:
             hotel_color = pandemic_review_mean.loc[state_abbrev,'color']
             ax_us.add_geometries([astate.geometry], ccrs.PlateCarree(),
-                          facecolor=hotel_color, edgecolor='white')
+                          facecolor=hotel_color, edgecolor='grey')
     except:
         #This may be a territory, or a state which has not stations(eg, RI)
         ax_us.add_geometries([astate.geometry], ccrs.PlateCarree(),
@@ -497,8 +504,125 @@ for astate in shpreader.Reader(states_shp).records():
 c_map_ax = fig.add_axes([0.91, 0.33, 0.01, 0.36])
 c_map_ax.axes.get_xaxis().set_visible(False)
 #c_map_ax.axes.get_yaxis().set_visible(False)
-cbar = matplotlib.colorbar.ColorbarBase(c_map_ax, cmap=cm.jet, orientation = 'vertical', ticks=[0, 0.5, 1])
+cbar = matplotlib.colorbar.ColorbarBase(c_map_ax, cmap=cm.RdYlGn, orientation = 'vertical', ticks=[0, 0.5, 1])
 cbar.ax.set_yticklabels(['-1 Star', '0', '+1 Star'])
 
 plt.show()
 
+#%%
+
+#
+# Average score overall
+#
+#
+
+
+
+#Calculate the Delta in Reviews pre-and post pandemic
+review_mean=reviews_df.groupby(['State']).mean()
+
+
+
+#Create the normalized gradient centered on the zero between the max and negative max
+#Find the max distance from 0 
+
+norm = Normalize(vmin=3, vmax=5)
+color_vals=[cm.jet_r(norm(val),) for val in review_mean.Review_rating ]
+
+
+#Add a column to the dataframe for the RGBA values we calculated
+review_mean['color'] = color_vals
+
+
+
+
+
+#Initialize the figure
+fig = plt.figure(figsize=(11, 8))
+
+#Center the main map on the US
+ax_us = fig.add_axes([0, 0, 1, 1], projection=ccrs.LambertConformal())
+ax_us.set_extent([-125, -66.5, 20, 50], ccrs.Geodetic())
+
+
+## Add in Alaska Subplot
+ax_ak = fig.add_axes([0.01, 0.15, 0.28, 0.20], projection=ccrs.PlateCarree())
+ax_ak.set_extent([-169, -130, 53, 71],  crs=ccrs.PlateCarree()) #Set lat and logitiude to display
+
+
+## Add in Hawaii Subplot      
+ax_hi = fig.add_axes([0.01, 0.35, 0.15, 0.15], projection=ccrs.PlateCarree())
+ax_hi.set_extent([-161, -154, 23, 18],  crs=ccrs.PlateCarree())#Set lat and logitiude
+
+
+#Load the shapefile, and the correct borders
+shapename = 'admin_1_states_provinces_lakes_shp'
+states_shp = shpreader.natural_earth(resolution='110m',
+                                     category='cultural', name=shapename)
+
+
+#Set the background colors/visibility
+for ax in [ax_us, ax_ak, ax_hi]:
+    ax.outline_patch.set_visible(False)  
+    ax.background_patch.set_visible(True)
+    #ax.background_patch.set_facecolor('blue')
+
+
+#Add Title
+title_str='Average Review Score Scraped per State\nMost Populous City in each State Scraped'
+ax_us.set_title(title_str, fontsize=15)
+
+
+#Loop through each state and paint the borders and facecolor according to the RGBA values we calculated
+for astate in shpreader.Reader(states_shp).records():
+    try:
+        #Get hotel info and colour for the state
+        state_abbrev = astate.attributes['postal']
+        
+        
+        if state_abbrev == "AK":
+            hotel_color = review_mean.loc['AK','color']
+            ax_ak.add_geometries([astate.geometry], ccrs.PlateCarree(),
+                      facecolor=hotel_color, edgecolor='grey')
+            x = astate.geometry.centroid.x        
+            y = astate.geometry.centroid.y
+           # ax_ak.text(x+2.4, y, round(review_mean.loc['AK','Review_rating'],1), color='White', size=11, ha='center', va='center', transform=ccrs.PlateCarree(), 
+           #         path_effects=[PathEffects.withStroke(linewidth=3, foreground="k", alpha=.8)])
+            
+        elif state_abbrev == "HI":
+            hotel_color = review_mean.loc['HI','color']
+            ax_hi.add_geometries([astate.geometry], ccrs.PlateCarree(),
+                      facecolor=hotel_color, edgecolor='grey')
+            x = astate.geometry.centroid.x        
+            y = astate.geometry.centroid.y
+            #ax_hi.text(x+2.4, y, round(review_mean.loc['HI','Review_rating'],1), color='White', size=11, ha='center', va='center', transform=ccrs.PlateCarree(), 
+             #       path_effects=[PathEffects.withStroke(linewidth=3, foreground="k", alpha=.8)])
+        else:
+            hotel_color = review_mean.loc[state_abbrev,'color']
+            ax_us.add_geometries([astate.geometry], ccrs.PlateCarree(),
+                          facecolor=hotel_color, edgecolor='grey')
+            x = astate.geometry.centroid.x        
+            y = astate.geometry.centroid.y
+            #ax_us.text(x, y, round(review_mean.loc[state_abbrev,'Review_rating'],1), color='White', size=11, ha='center', va='center', transform=ccrs.PlateCarree(), 
+            #        path_effects=[PathEffects.withStroke(linewidth=3, foreground="k", alpha=.8)])
+    except:
+        #This may be a territory, or a state which has not stations(eg, RI)
+        ax_us.add_geometries([astate.geometry], ccrs.PlateCarree(),
+                          facecolor='grey', edgecolor='white')
+        print(f'{state_abbrev}: SKIPPED')
+        pass
+    
+
+
+
+
+
+
+#Add stand-alone colourbar to show the direction of the gradient
+c_map_ax = fig.add_axes([0.91, 0.33, 0.01, 0.36])
+c_map_ax.axes.get_xaxis().set_visible(False)
+#c_map_ax.axes.get_yaxis().set_visible(False)
+cbar = matplotlib.colorbar.ColorbarBase(c_map_ax, cmap=cm.jet_r, orientation = 'vertical', ticks=[0, 0.5, 1])
+cbar.ax.set_yticklabels(['3 Stars', '4 Stars', '5 Stars'])
+
+plt.show()

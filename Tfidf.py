@@ -11,7 +11,8 @@ import concurrent.futures as cf
 from tqdm import tqdm
 import math
 import nltk
-
+from sklearn.feature_extraction.text import TfidfVectorizer
+import seaborn as sns
 
 #Flatten list utility function
 def flatten_list(list_in):
@@ -108,24 +109,6 @@ reviews_df = reviews_df.merge(state_df, on = 'hotel_ID')
 sample = reviews_df.sample(n=2000)
 
 
-#%%
-
-
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-
-
-vectorizer = TfidfVectorizer(ngram_range=(1,2),token_pattern = r'[\w\']+', 
-                             max_features=10000, strip_accents='ascii')
-
-vectorized_features = vectorizer.fit_transform(sample.tokens_joined)
-
-
-feature_names = np.array(vectorizer.get_feature_names())
-feature_tfidf = np.asarray(vectorized_features.sum(axis=0)).ravel()
-features_df = pd.DataFrame([feature_names, feature_tfidf]).T
-features_df = features_df.rename(columns={0:"Features", 1:'TFIDF'})
-features_df = features_df.sort_values(by='TFIDF', ascending=False).reset_index(drop=True)
 
 
 #%%
@@ -225,6 +208,80 @@ feature_comparison=feature_comparison.rename(columns={'index':'Ranking'})
 
 
 #%%
+for year in tqdm(range(2005,2023)):
+    print(f'\n    Year: {year}\n########################\n')
+    annual_reviews = reviews_df[reviews_df.Stay_Year == year]
+    annual_features = get_features(annual_reviews)
+    annual_features.to_csv(wd+'\\Data\\Tfidf\\Annual\\'+str(year)+'_reviews.csv')
+
+
+#%%
+
+
+
+rankings = []
+
+for file in os.listdir(wd+'\\Data\\Tfidf\\Annual\\'):
+    file_tfidf = pd.read_csv(wd+'\\Data\\Tfidf\\Annual\\'+file, index_col=0)
+    file_tfidf=file_tfidf.rename(columns={'Features':file[0:file.find('_')]})
+    file_tfidf=file_tfidf.drop('TFIDF', axis=1)
+    rankings.append(file_tfidf)
+    
+
+feature_comparison=pd.concat(rankings, axis=1)
+feature_comparison=feature_comparison.reset_index()
+feature_comparison=feature_comparison.rename(columns={'index':'Ranking'})
+
+
+
+#%%
+
+def extract_annual_features(df_in, feature_select):
+    """
+    Takes the annual features dataframe, and finds the ranking for the selected feature
+    """
+        
+    collect = {}
+    
+    
+    for year in range(2005,2023):
+        
+        rank = df_in[df_in[str(year)]==feature_select].Ranking.iloc[0]
+        
+        collect[year] = rank
+        
+    return pd.Series(collect)
+
+#%%
+
+collect = []
+
+for word in ['clean', 'breakfast', 'staff', 'location']:
+    annual = extract_annual_features(feature_comparison, word)
+    annual = annual.rename(word)
+    collect.append(annual)
+
+selected_annual = pd.concat(collect, axis=1)
+
+
+#%%
+
+from  matplotlib.ticker import FuncFormatter
+
+
+
+selected_annual.plot(color = ['#5ACBD0', '#D05F5A', '#9A5AD0', '#90D05A'], figsize=(8,5))
+plt.gca().xaxis.set_major_formatter(FuncFormatter(lambda x, _: int(x)))
+plt.vlines(2020, 20, 1, linestyles='dotted', colors='#3F4040')
+plt.ylim(2,18)
+plt.gca().invert_yaxis()
+plt.ylabel('Feature Ranking')
+plt.xlabel('Year')
+plt.title('Feature Importance over Time', fontsize=14)
+plt.legend(bbox_to_anchor=(0.25, 0.7, 1, 0),  fontsize=11, frameon=False)
+
+
+
 
 
 
