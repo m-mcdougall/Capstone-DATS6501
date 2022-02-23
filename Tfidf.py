@@ -118,7 +118,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 vectorizer = TfidfVectorizer(ngram_range=(1,2),token_pattern = r'[\w\']+', 
                              max_features=10000, strip_accents='ascii')
 
-vectorized_features = vectorizer.fit_transform(reviews_df.tokens_joined)
+vectorized_features = vectorizer.fit_transform(sample.tokens_joined)
 
 
 feature_names = np.array(vectorizer.get_feature_names())
@@ -129,6 +129,104 @@ features_df = features_df.sort_values(by='TFIDF', ascending=False).reset_index(d
 
 
 #%%
+
+
+def get_features(df_in):
+    
+    vectorizer = TfidfVectorizer(ngram_range=(1,2),token_pattern = r'[\w\']+', 
+                             max_features=10000, strip_accents='ascii', 
+                             stop_words=['u', 'h', "i've", "i'm", 'm', 'd', "i'd"])
+
+    vectorized_features = vectorizer.fit_transform(df_in.tokens_joined)
+    
+    
+    feature_names = np.array(vectorizer.get_feature_names())
+    feature_tfidf = np.asarray(vectorized_features.sum(axis=0)).ravel()
+    features_df = pd.DataFrame([feature_names, feature_tfidf]).T
+    features_df = features_df.rename(columns={0:"Features", 1:'TFIDF'})
+    features_df = features_df.sort_values(by='TFIDF', ascending=False).reset_index(drop=True)
+    
+    return features_df
+
+#%%
+
+# Get features for the sample
+
+sample_features = get_features(sample)
+sample_features.to_csv(wd+'\\Data\\Tfidf\\Sample_reviews.csv')
+
+#%%
+
+# All reviews - Warning, takes a long time to run
+
+all_features = get_features(reviews_df)
+all_features.to_csv(wd+'\\Data\\Tfidf\\All_reviews.csv')
+
+print("Full Set done")
+#%%
+
+# Get features for the sample
+
+sample_features = get_features(sample)
+sample_features.to_csv(wd+'\\Data\\Tfidf\\Sample_reviews.csv')
+
+#%%
+
+
+# Compare features for pre/post Covid
+
+data_in = reviews_df[reviews_df.Stay_PrePandemic==True]
+pre_pand_features = get_features(data_in)
+pre_pand_features.to_csv(wd+'\\Data\\Tfidf\\PrePandemic_reviews.csv')
+
+print("Pre done")
+
+
+data_in = reviews_df[reviews_df.Stay_PrePandemic==False]
+pre_pand_features = get_features(data_in)
+pre_pand_features.to_csv(wd+'\\Data\\Tfidf\\PostPandemic_reviews.csv')
+
+print("Post done")
+
+#%%
+
+# Compare features for good reviews vs bad reviews
+
+data_in = reviews_df[reviews_df.Review_rating<=2]
+quality_features = get_features(data_in)
+quality_features.to_csv(wd+'\\Data\\Tfidf\\Bad_reviews.csv')
+
+print("Bad Stay done")
+
+
+data_in = reviews_df[reviews_df.Review_rating>=4]
+quality_features = get_features(data_in)
+quality_features.to_csv(wd+'\\Data\\Tfidf\\Good_reviews.csv')
+
+print("Good Stay done")
+
+#%%
+
+# Load the tfidfs from file and compare
+
+rankings = []
+
+for file in os.listdir(wd+'\\Data\\Tfidf\\'):
+    file_tfidf = pd.read_csv(wd+'\\Data\\Tfidf\\'+file, index_col=0)
+    file_tfidf=file_tfidf.rename(columns={'Features':file[0:file.find('_')]})
+    file_tfidf=file_tfidf.drop('TFIDF', axis=1)
+    rankings.append(file_tfidf)
+    
+
+feature_comparison=pd.concat(rankings, axis=1)
+feature_comparison=feature_comparison.reset_index()
+feature_comparison=feature_comparison.rename(columns={'index':'Ranking'})
+
+
+
+#%%
+
+
 
 
 
