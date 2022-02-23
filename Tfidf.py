@@ -26,90 +26,119 @@ os.chdir(wd)
 
 # Import the city's Hotels and Reviews
 
-city_id = 'g35394'
-city_id = 'g35805'
+
+###
+# Load in all Hotels
+###
+
+#Loop through all cities - Collect all Hotels
+all_files = os.listdir(wd+'\\Data\\Cleaned\\')
+all_cities = [file for file in all_files if '.pkl' in file and 'Hotels' in file]
+
+hotels = []
+for city in all_cities:
+    hotels_file =  pd.read_pickle(wd+'\\Data\\Cleaned\\'+city)
+    
+    #Drop some columns to make the dataframe a bit lighter
+    hotels_file.drop(['hotel_city','hotel_blurb', 'hotel_prop_amenity',
+                      'hotel_room_amenity','hotel_location_food', 'hotel_location_attract'], 
+                     axis=1, inplace=True)
+    
+    hotels.append(hotels_file)
+
+hotels_df = pd.concat(hotels)
+
+#Delete intermediaries to free up memory
+del all_files, all_cities, city, hotels, hotels_file
 
 
-hotels_file = 'Hotels_' + city_id + '.csv'
-reviews_file = 'Reviews_' + city_id + '.csv'
 
+## Engineer the state from the address
 
-hotels_df_load = pd.read_pickle(wd+'\\Data\\Cleaned\\'+hotels_file[0:-4]+'.pkl')
-reviews_df_load = pd.read_pickle(wd+'\\Data\\Cleaned\\'+reviews_file[0:-4]+'.pkl')
+#Split the address by commas
+new = hotels_df.hotel_address.str.split(',')
 
+#State and Zip Code in the final comma set (total number varies)
+new = new.apply(lambda x: x[-1])
+#Remove zip code
+new = new.str.replace(r'[ ][\d-]+', '', regex=True)
+new = new.str.replace(r'[ ]', '', regex=True)
 
-
+#Rejoin to the dataframe
+hotels_df['State'] = new
 
 #%%
-sample = reviews_df.tokens_joined.iloc[0:250]
 
-from sklearn.feature_extraction.text import CountVectorizer
+###
+# Load in all Reviews
+###
 
-cv= CountVectorizer(ngram_range=(1,2), token_pattern = r'[\w\']+', max_features=10000, strip_accents='ascii')
+#Loop through all cities - Collect all Hotels
+all_files = os.listdir(wd+'\\Data\\Cleaned\\')
+all_cities = [file for file in all_files if '.pkl' in file and 'Reviews' in file]
 
-word_count_vector=cv.fit_transform(sample)
-
-list(cv.vocabulary_.keys())[:10]
-
-from sklearn.feature_extraction.text import TfidfTransformer
-tfidf_transformer=TfidfTransformer(smooth_idf=True,use_idf=True)
-tfidf_transformer.fit(word_count_vector)
-
-
-
-
-#%%
-
-
-def sort_coo(coo_matrix):
-    tuples = zip(coo_matrix.col, coo_matrix.data)
-    return sorted(tuples, key=lambda x: (x[1], x[0]), reverse=True)
-def extract_topn_from_vector(feature_names, sorted_items, topn=10):
-    """get the feature names and tf-idf score of top n items"""
+hotels = []
+for city in tqdm(all_cities):
+    hotels_file =  pd.read_pickle(wd+'\\Data\\Cleaned\\'+city)
     
-    #use only topn items from vector
-    sorted_items = sorted_items[:topn]
-    score_vals = []
-    feature_vals = []
-    
-    # word index and corresponding tf-idf score
-    for idx, score in sorted_items:
+    #Drop some columns to make the dataframe a bit lighter
+    hotels_file.drop(['Review_date', 'Reviewer_loc','Review_stay_date', 'Review_title', 'Review_text',], 
+                     axis=1, inplace=True)
         
-        #keep track of feature name and its corresponding score
-        score_vals.append(round(score, 3))
-        feature_vals.append(feature_names[idx])
-    #create a tuples of feature,score
-    #results = zip(feature_vals,score_vals)
-    results= {}
-    for idx in range(len(feature_vals)):
-        results[feature_vals[idx]]=score_vals[idx]
-    
-    return results
+    hotels.append(hotels_file)
 
-# you only needs to do this once, this is a mapping of index to 
-feature_names=cv.get_feature_names()
-# get the document that we want to extract keywords from
-doc= list(demo_eel.tokens_joined.iloc[150:600].array)
-#generate tf-idf for the given document
-tf_idf_vector=tfidf_transformer.transform(cv.transform(doc))
-#sort the tf-idf vectors by descending order of scores
-sorted_items=sort_coo(tf_idf_vector.tocoo())
-#extract only the top n; n here is 10
-keywords=extract_topn_from_vector(feature_names,sorted_items,20)
-# now print the results
-print("\n=====Doc=====")
-print(doc)
-print("\n===Keywords===")
-for k in keywords:
-    print(k,keywords[k])
-    
-    
-#%%
+#Merge into one dataframe
+reviews_df = pd.concat(hotels)
+reviews_df.rename({'Hotel_ID':'hotel_ID'}, axis=1, inplace=True)
+
+#Delete intermediaries to free up memory
+del all_files, all_cities, city, hotels, hotels_file
 
 
-doc= list(demo_eel.tokens_joined.iloc[560:600].array)
-#generate tf-idf for the given document
-tf_idf_vector=tfidf_transformer.transform(cv.transform(doc))
+## Merge the staes to the Reviews
+
+
+#Get the states 
+state_df = hotels_df.filter(['hotel_ID', 'State']).copy()
+
+#Merge the states into each review, for grouping.
+reviews_df = reviews_df.merge(state_df, on = 'hotel_ID')
+
+#Get a sample, because you canot open the full dataset
+sample = reviews_df.sample(n=2000)
 
 
 #%%
+
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+
+
+vectorizer = TfidfVectorizer(ngram_range=(1,2),token_pattern = r'[\w\']+', 
+                             max_features=10000, strip_accents='ascii')
+
+vectorized_features = vectorizer.fit_transform(reviews_df.tokens_joined)
+
+
+feature_names = np.array(vectorizer.get_feature_names())
+feature_tfidf = np.asarray(vectorized_features.sum(axis=0)).ravel()
+features_df = pd.DataFrame([feature_names, feature_tfidf]).T
+features_df = features_df.rename(columns={0:"Features", 1:'TFIDF'})
+features_df = features_df.sort_values(by='TFIDF', ascending=False).reset_index(drop=True)
+
+
+#%%
+
+
+
+
+
+
+
+
+
+
+
+
+

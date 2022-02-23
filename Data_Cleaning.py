@@ -140,6 +140,8 @@ def date_splitter(df_in, column_in):
     
     df_in[column_in].replace('Today', 'Feb 2022', inplace=True)
     df_in[column_in].replace('Yesterday', 'Feb 2022', inplace=True)
+    df_in[column_in]=df_in[column_in].str.replace(' wrote a review ', '',)
+    df_in[column_in]=df_in[column_in].str.strip()
     
     #Split review date into month and year
     new=df_in[column_in].str.split(' ', expand = True)
@@ -208,8 +210,8 @@ def location_calculator(df_in, column_in):
 
 # Import the city's Hotels and Reviews
 
-city_id = 'g35394'
-city_id = 'g35805'
+#city_id = 'g35394'
+city_id = 'g60763'
 
 
 hotels_file = 'Hotels_' + city_id + '.csv'
@@ -304,8 +306,8 @@ issues = []
 
 #Loop through all cities
 all_files = os.listdir(wd+'\\Data\\')
-all_cities = [file[len('Hotels_'):-4] for file in all_files if '.csv' in file and 'Hotels' in file]
-
+#all_cities = [file[len('Hotels_'):-4] for file in all_files if '.csv' in file and 'Hotels' in file]
+all_cities = ['g45963', 'g60805', 'g60982', 'g49022']
 
 for city_id in tqdm(all_cities):
     
@@ -403,7 +405,7 @@ issues_copy = ['g32655', 'g45963', 'g60763', 'g60805', 'g60982']
 #No reviews, Review headers missing,  Review headers missing, No reviews,  Review headers missing,
 
 city_id = 'g60982'
-
+issues_copy = ['g45963', 'g60805']
 
 
 

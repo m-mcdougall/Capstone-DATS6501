@@ -113,14 +113,19 @@ hotels_state_sum=hotels_df.groupby('State').sum()
 hotels_state_mean=hotels_df.groupby('State').mean()
 
 
+fig = plt.figure(figsize=(14, 6))
 sns.barplot(x=hotels_state_unique.index, y=hotels_state_unique.hotel_ID, )
 plt.title('Unique Hotels')
 plt.show()
 
+
+fig = plt.figure(figsize=(14, 6))
 sns.barplot(x=hotels_state_sum.index, y=hotels_state_sum.Number_reviews, )
 plt.title('Total number reviews')
 plt.show()
 
+
+fig = plt.figure(figsize=(14, 6))
 sns.barplot(x=hotels_state_mean.index, y=hotels_state_mean.Review_rating_mean, )
 plt.title('Mean review Value')
 plt.show()
@@ -128,6 +133,28 @@ plt.show()
 sns.barplot(x=hotels_state_mean.index, y=hotels_state_mean.Review_rating_std, )
 plt.title('Mean std review Value')
 plt.show()
+
+#%%
+
+#
+#  A small readout of basic stats on the data
+#  Useful for populating the data statistics table
+#
+
+
+print(f'\nNumber of unique hotels: {hotels_df.hotel_ID.nunique()}')
+print()
+print(f'Number of Reviews - Total: {reviews_df.shape[0]}')
+print(f'Number of Reviews - Pre: {reviews_df[reviews_df.Stay_PrePandemic==True].shape[0]}')
+print(f'Number of Reviews - Post: {reviews_df[reviews_df.Stay_PrePandemic==False].shape[0]}')
+print()
+print(f'Mean of Reviews - Total: {reviews_df.Review_rating.mean()}')
+print(f'Mean of Reviews - Pre: {reviews_df[reviews_df.Stay_PrePandemic==True].Review_rating.mean()}')
+print(f'Mean of Reviews - Post: {reviews_df[reviews_df.Stay_PrePandemic==False].Review_rating.mean()}')
+print()
+print(f'STD of Reviews - Total: {reviews_df.Review_rating.std()}')
+print(f'STD of Reviews - Pre: {reviews_df[reviews_df.Stay_PrePandemic==True].Review_rating.std()}')
+print(f'STD of Reviews - Post: {reviews_df[reviews_df.Stay_PrePandemic==False].Review_rating.std()}')
 
 #%%
 
@@ -203,7 +230,7 @@ for astate in shpreader.Reader(states_shp).records():
                       facecolor=hotel_color, edgecolor='white')
         elif state_abbrev == "HI":
             ax_hi.add_geometries([astate.geometry], ccrs.PlateCarree(),
-                      facecolor='grey', edgecolor='white')
+                      facecolor=hotel_color, edgecolor='white')
         else:
             ax_us.add_geometries([astate.geometry], ccrs.PlateCarree(),
                           facecolor=hotel_color, edgecolor='white')
@@ -217,12 +244,6 @@ for astate in shpreader.Reader(states_shp).records():
 
 
 
-##NOTE: This is just needed until HI data comes in
-## DELETE AFTER DONE
-for astate in shpreader.Reader(states_shp).records():
-    if astate.attributes['postal'] == 'HI':
-        ax_hi.add_geometries([astate.geometry], ccrs.PlateCarree(),
-                      facecolor='grey', edgecolor='white')
 
 
 ## Create a custom legend for the colours
@@ -304,7 +325,7 @@ for astate in shpreader.Reader(states_shp).records():
                       facecolor=hotel_color, edgecolor='white')
         elif state_abbrev == "HI":
             ax_hi.add_geometries([astate.geometry], ccrs.PlateCarree(),
-                      facecolor='grey', edgecolor='white')
+                      facecolor=hotel_color, edgecolor='white')
         else:
             ax_us.add_geometries([astate.geometry], ccrs.PlateCarree(),
                           facecolor=hotel_color, edgecolor='white')
@@ -316,14 +337,6 @@ for astate in shpreader.Reader(states_shp).records():
         pass
     
 
-
-
-##NOTE: This is just needed until HI data comes in
-## DELETE AFTER DONE
-for astate in shpreader.Reader(states_shp).records():
-    if astate.attributes['postal'] == 'HI':
-        ax_hi.add_geometries([astate.geometry], ccrs.PlateCarree(),
-                      facecolor='grey', edgecolor='white')
 
 
 
@@ -359,30 +372,6 @@ state_std_review = x.Review_rating.rename('Review_rating_std')
 x=reviews_df.groupby('State').sem()
 state_sem_review = x.Review_rating.rename('Review_rating_sem')
 
-#%%
-
-pandemic_review_mean=reviews_df.groupby(['State', 'Stay_PrePandemic']).mean().Review_rating
-pandemic_review_mean=pandemic_review_mean.reset_index()
-
-pre_x = pandemic_review_mean[pandemic_review_mean.Stay_PrePandemic ==True]
-pre_x = pre_x.set_index('State')
-
-post_x = pandemic_review_mean[pandemic_review_mean.Stay_PrePandemic ==False]
-post_x = post_x.set_index('State')
-
-pre_x.Review_rating - post_x.Review_rating
-
-
-#%%
-
-
-sns.barplot(x=hotels_state_mean.index, y=hotels_state_mean.Review_rating_mean, )
-plt.title('Mean review Value')
-plt.show()
-
-sns.barplot(x=state_mean_review.index, y=state_mean_review )
-plt.title('Mean review Value')
-plt.show()
 
 
 
@@ -391,7 +380,7 @@ plt.show()
 # Plot the mean and STD review rating by state
 
 
-fig = plt.figure(figsize=(14, 8))
+fig = plt.figure(figsize=(14, 6))
 state_order =list(reviews_df.State.unique());state_order.sort()
 sns.barplot(data = reviews_df, x='State', y='Review_rating',order=state_order, ci='sd')
 plt.ylim(0,5)
@@ -404,11 +393,12 @@ plt.show()
 #%%
 
 #Plot both pre and post pandemic, but looks pretty bad. Going with a delta instead.
-fig = plt.figure(figsize=(18, 8))
+fig = plt.figure(figsize=(14,6))
 state_order =list(reviews_df.State.unique());state_order.sort()
 sns.catplot(data = reviews_df, x='State', y='Review_rating', hue='Stay_PrePandemic',
             order=state_order, ci='sd', kind='bar',
-            height = 5, aspect=3)
+            height = 5, aspect=3, palette=('muted'))
+plt.ylim(0,5)
 plt.title('Mean Review Rating by State', fontsize=15)
 plt.show()
 #%%
@@ -483,9 +473,9 @@ for astate in shpreader.Reader(states_shp).records():
             ax_ak.add_geometries([astate.geometry], ccrs.PlateCarree(),
                       facecolor=hotel_color, edgecolor='white')
         elif state_abbrev == "HI":
-            #hotel_color = pandemic_review_mean.loc['HI','color']
+            hotel_color = pandemic_review_mean.loc['HI','color']
             ax_hi.add_geometries([astate.geometry], ccrs.PlateCarree(),
-                      facecolor='grey', edgecolor='white')
+                      facecolor=hotel_color, edgecolor='white')
         else:
             hotel_color = pandemic_review_mean.loc[state_abbrev,'color']
             ax_us.add_geometries([astate.geometry], ccrs.PlateCarree(),
@@ -499,13 +489,6 @@ for astate in shpreader.Reader(states_shp).records():
     
 
 
-
-##NOTE: This is just needed until HI data comes in
-## DELETE AFTER DONE
-for astate in shpreader.Reader(states_shp).records():
-    if astate.attributes['postal'] == 'HI':
-        ax_hi.add_geometries([astate.geometry], ccrs.PlateCarree(),
-                      facecolor='grey', edgecolor='white')
 
 
 
