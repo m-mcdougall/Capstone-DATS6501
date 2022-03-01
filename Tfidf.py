@@ -13,6 +13,8 @@ import math
 import nltk
 from sklearn.feature_extraction.text import TfidfVectorizer
 import seaborn as sns
+from  matplotlib.ticker import FuncFormatter
+
 
 #Flatten list utility function
 def flatten_list(list_in):
@@ -236,6 +238,12 @@ feature_comparison=feature_comparison.rename(columns={'index':'Ranking'})
 
 #%%
 
+##
+#
+#  Plot trends in features annually
+#
+##
+
 def extract_annual_features(df_in, feature_select):
     """
     Takes the annual features dataframe, and finds the ranking for the selected feature
@@ -252,7 +260,9 @@ def extract_annual_features(df_in, feature_select):
         
     return pd.Series(collect)
 
-#%%
+
+
+# Extract words of interest
 
 collect = []
 
@@ -264,11 +274,8 @@ for word in ['clean', 'breakfast', 'staff', 'location']:
 selected_annual = pd.concat(collect, axis=1)
 
 
-#%%
 
-from  matplotlib.ticker import FuncFormatter
-
-
+# Plot the extracted trends 
 
 selected_annual.plot(color = ['#5ACBD0', '#D05F5A', '#9A5AD0', '#90D05A'], figsize=(8,5))
 plt.gca().xaxis.set_major_formatter(FuncFormatter(lambda x, _: int(x)))
@@ -282,18 +289,133 @@ plt.legend(bbox_to_anchor=(0.25, 0.7, 1, 0),  fontsize=11, frameon=False)
 
 
 
+#%%%
+
+##
+#
+#  By State
+#
+##
+
+#Loop through by State and extract featues
+for state in tqdm(reviews_df.State.unique()):
+    
+    state_reviews = reviews_df[reviews_df.State == state]
+    state_features = get_features(state_reviews)
+    state_features.to_csv(wd+'\\Data\\Tfidf\\State\\'+str(state)+'_reviews.csv')
+    
+    print(f'\n {state} Top Ten\n-------------')
+    print(state_features.head(10))
+
+
+#%%
+
+# Load the tfidfs from file and compare - By State
+
+rankings = []
+
+for file in os.listdir(wd+'\\Data\\Tfidf\\State\\'):
+    file_tfidf = pd.read_csv(wd+'\\Data\\Tfidf\\State\\'+file, index_col=0)
+    file_tfidf=file_tfidf.rename(columns={'Features':file[0:file.find('_')]})
+    file_tfidf=file_tfidf.drop('TFIDF', axis=1)
+    rankings.append(file_tfidf)
+    
+
+feature_comparison=pd.concat(rankings, axis=1)
+feature_comparison=feature_comparison.reset_index()
+feature_comparison=feature_comparison.rename(columns={'index':'Ranking'})
 
 
 
+#%%
+
+##
+#
+#  By Region
+#
+##
+
+#Define the regions and the component states
+regions={"Pacific":['WA', 'OR','CA','NV','AK','HI',],
+         'Rocky_Mountains':['MT','ID','WY','UT','CO', 'AZ','NM',],
+         'Midwest':['ND','SD','NE','KS','MN','IA','MO','WI','IL','MI','IN','OH'],
+         'Southwest':['TX','OK', 'AR','LA',],
+         'Southeast':['KY','TN','MS','AL','WV','VA','NC','SC','GA','FL',],
+         'Northeast':['ME','NH','VT','NY','MA','RI','CT','PA','NJ','DE','MD','DC']}    
+
+#Flip the key:value pairs, to assign one region for each state
+region_flip={}
+for key in regions:
+    for state in regions[key]:
+        region_flip[state]=key
+
+
+#Assign a region column based on the state
+reviews_df["Region"] = reviews_df["State"].copy()
+reviews_df["Region"] = reviews_df["Region"].replace(region_flip)
+
+#Retake a sample, now including the region
+sample = reviews_df.sample(n=1000)
+
+#Loop through by region and extract featues
+for region in tqdm(reviews_df.Region.unique()):
+    
+    region_reviews = reviews_df[reviews_df.Region == region]
+    region_features = get_features(region_reviews)
+    region_features.to_csv(wd+'\\Data\\Tfidf\\Region\\'+str(region)+'_reviews.csv')
+    
+    print(f'\n {region} Top Ten\n-------------')
+    print(region_features.head(10))
+    
+    
+#%%
+
+
+# Load the tfidfs from file and compare - By Region
+
+rankings = []
+
+for file in os.listdir(wd+'\\Data\\Tfidf\\Region\\'):
+    file_tfidf = pd.read_csv(wd+'\\Data\\Tfidf\\Region\\'+file, index_col=0)
+    file_tfidf=file_tfidf.rename(columns={'Features':file[0:file.find('_')]})
+    file_tfidf=file_tfidf.drop('TFIDF', axis=1)
+    rankings.append(file_tfidf)
+    
+
+feature_comparison=pd.concat(rankings, axis=1)
+feature_comparison=feature_comparison.reset_index()
+feature_comparison=feature_comparison.rename(columns={'index':'Ranking'})
+
+#%%
+
+def extract_category_features(df_in, feature_select):
+    """
+    Takes the annual features dataframe, and finds the ranking for the selected feature
+    """
+        
+    collect = {}
+    
+    
+    for category in df_in.columns:
+        
+        try:
+            rank = df_in[df_in[category]==feature_select].Ranking.iloc[0]
+        except:
+            rank = 1001
+        
+        collect[category] = rank
+        
+    return pd.Series(collect).drop('Ranking', axis=0)
 
 
 
+# Extract words of interest
 
+collect = []
 
+for word in ['clean', 'breakfast', 'pool', 'location']:
+    annual = extract_category_features(feature_comparison, word)
+    annual = annual.rename(word)
+    collect.append(annual)
 
-
-
-
-
-
-
+selected_annual = pd.concat(collect, axis=1)
