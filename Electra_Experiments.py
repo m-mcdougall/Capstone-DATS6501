@@ -23,6 +23,16 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 #Modeling Imports
+import torch
+from sklearn.model_selection import train_test_split
+from datasets import load_dataset
+from datasets import load_metric
+from transformers import AutoTokenizer, DataCollatorWithPadding
+from transformers import AutoModelForSequenceClassification
+from transformers import get_scheduler
+from torch.utils.data import DataLoader
+from torch.optim import AdamW
+
 
 
 #Flatten list utility function
@@ -82,7 +92,6 @@ new = new.str.replace(r'[ ]', '', regex=True)
 #Rejoin to the dataframe
 hotels_df['State'] = new
 
-#%%
 
 ###
 # Load in all Reviews
@@ -133,18 +142,18 @@ reviews_df = reviews_df.merge(state_df, on = 'hotel_ID')
 #Drop the hotel ID - not needed
 reviews_df.drop(['hotel_ID'],axis=1, inplace=True)  
 
+
+
 #Get a sample, because you canot open the full dataset
 sample = reviews_df.sample(n=2000)
 
 
 
-
-
 #%%
 
-from sklearn.model_selection import train_test_split
-from transformers import ElectraForPreTraining, ElectraTokenizerFast
-import torch
+##Save the sample as a test for the Electra Model
+
+sample['Review_rating'] = sample['Review_rating'] -1
 
 
 train, test = train_test_split(sample, test_size=0.4, random_state=42)
@@ -156,50 +165,43 @@ validation.to_csv(wd+'\\Data\\Cleaned\\Split\\validation_sample.csv', index=Fals
 
 #%%
 
-
-###  Imports  ###
-
-from datasets import load_dataset
-from transformers import AutoTokenizer, DataCollatorWithPadding
-from torch.utils.data import DataLoader
-from transformers import AutoModelForSequenceClassification
-from transformers import AdamW
-from transformers import get_scheduler
-import torch
-from tqdm.auto import tqdm
-from datasets import load_metric
+################################
+#
+#  Modeling with ELECTRA
+#
+################################
 
 
-
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from transformers import AutoTokenizer, DataCollatorWithPadding
-import torch
-
+#Load Electra - Model and tokenizer
 tokenizer = AutoTokenizer.from_pretrained("google/electra-base-discriminator")
 model = AutoModelForSequenceClassification.from_pretrained("google/electra-base-discriminator")
 
 
-from datasets import load_dataset
+#Load Data
 dataset = load_dataset('csv', data_files={'train': wd+'\\Data\\Cleaned\\Split\\train_sample.csv',
                                           'test': wd+'\\Data\\Cleaned\\Split\\test_sample.csv',
                                           'validation':wd+'\\Data\\Cleaned\\Split\\validation_sample.csv'})
-
 
 
 ###  Tokenize  ###
 def tokenize_function(example):
     return tokenizer(example["Review_Body"],truncation=True)
 
+
+#Prepare the data
 tokenized_datasets = dataset.map(tokenize_function, batched=True)
 data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
+#Remove raw text - already tokenized and masked
 tokenized_datasets = tokenized_datasets.remove_columns(["Review_Body"])
+
+#Note: Removing all non-text columns?
+tokenized_datasets = tokenized_datasets.remove_columns(['State',"Review_PrePandemic", 'Stay_PrePandemic'])
+
+#Rename and reformat columns
 tokenized_datasets = tokenized_datasets.rename_column("Review_rating", "labels")
 tokenized_datasets.set_format("torch", columns=tokenized_datasets["train"].column_names)
 tokenized_datasets["train"].column_names
-
-
-
 
 
 
@@ -213,18 +215,15 @@ eval_dataloader = DataLoader(tokenized_datasets["validation"],
 for batch in train_dataloader:
     break
 
-
 #%%
 
 
+
 ###  Set-up  ###
-num_epochs = 5
+num_epochs = 8
 checkpoint = "google/electra-base-discriminator"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
-
-for batch in train_dataloader:
-    break
 
 
 ###  Model Set-up  ###
@@ -259,7 +258,7 @@ for epoch in range(num_epochs):
         progress_bar.update(1)
 
 ###  Evaluations  ###
-metric = load_metric("glue", task)
+metric = load_metric("accuracy")
 model.eval()
 for batch in eval_dataloader:
     batch = {k: v.to(device) for k, v in batch.items()}
@@ -276,116 +275,6 @@ metric.compute()
 
 
 
-
-
-
-
-
-
-
-
-#%%
-
-
-###  Imports  ###
-
-from datasets import load_dataset
-from transformers import AutoTokenizer, DataCollatorWithPadding
-from torch.utils.data import DataLoader
-from transformers import AutoModelForSequenceClassification
-from transformers import AdamW
-from transformers import get_scheduler
-import torch
-from tqdm.auto import tqdm
-from datasets import load_metric
-
-
-
-
-###  Set-up  ###
-num_epochs = 5
-checkpoint = "microsoft/deberta-v3-small"
-tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-task = "wnli"
-
-###  Choose Task Dataset  ###
-raw_datasets = load_dataset("glue", task)
-
-
-###  Tokenize  ###
-def tokenize_function(example):
-    return tokenizer(example["sentence1"], example["sentence2"], truncation=True)
-
-tokenized_datasets = raw_datasets.map(tokenize_function, batched=True)
-data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
-
-tokenized_datasets = tokenized_datasets.remove_columns(["sentence1", "sentence2", "idx"])
-tokenized_datasets = tokenized_datasets.rename_column("label", "labels")
-tokenized_datasets.set_format("torch")
-tokenized_datasets["train"].column_names
-
-
-###  Dataloader  ###
-train_dataloader = DataLoader(tokenized_datasets["train"],
-                              shuffle=True, batch_size=8, collate_fn=data_collator)
-eval_dataloader = DataLoader(tokenized_datasets["validation"],
-                             batch_size=8, collate_fn=data_collator)
-
-for batch in train_dataloader:
-    break
-{k: v.shape for k, v in batch.items()}
-
-
-###  Model Set-up  ###
-model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=2)
-outputs = model(**batch)
-print(outputs.loss, outputs.logits.shape)
-optimizer = AdamW(model.parameters(), lr=5e-5)
-
-num_training_steps = num_epochs * len(train_dataloader)
-lr_scheduler = get_scheduler( "linear", optimizer=optimizer,
-                              num_warmup_steps=0, num_training_steps=num_training_steps)
-print(num_training_steps)
-
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-model.to(device)
-device
-
-#Tqdm
-progress_bar = tqdm(range(num_training_steps))
-
-model.train()
-for epoch in range(num_epochs):
-    for batch in train_dataloader:
-        batch = {k: v.to(device) for k, v in batch.items()}
-        outputs = model(**batch)
-        loss = outputs.loss
-        loss.backward()
-
-        optimizer.step()
-        lr_scheduler.step()
-        optimizer.zero_grad()
-        progress_bar.update(1)
-
-###  Evaluations  ###
-metric = load_metric("glue", task)
-model.eval()
-for batch in eval_dataloader:
-    batch = {k: v.to(device) for k, v in batch.items()}
-    with torch.no_grad():
-        outputs = model(**batch)
-
-    logits = outputs.logits
-    predictions = torch.argmax(logits, dim=-1)
-    metric.add_batch(predictions=predictions, references=batch["labels"])
-
-metric.compute()
-
-
-#%%
-
-
-'sentence1' in raw_datasets['train'].features
 
 
 
