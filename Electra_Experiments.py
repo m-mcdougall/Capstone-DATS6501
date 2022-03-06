@@ -58,7 +58,7 @@ all_files = os.listdir(wd+'\\Data\\Cleaned\\')
 all_cities = [file for file in all_files if '.pkl' in file and 'Hotels' in file]
 
 #Start with just one
-all_cities = [all_cities[1]]
+#all_cities = [all_cities[1]]
 
 hotels = []
 for city in all_cities:
@@ -102,7 +102,7 @@ all_files = os.listdir(wd+'\\Data\\Cleaned\\')
 all_cities = [file for file in all_files if '.pkl' in file and 'Reviews' in file]
 
 #Start with just one
-all_cities = [all_cities[1]]
+#all_cities = [all_cities[1]]
 
 hotels = []
 for city in tqdm(all_cities):
@@ -162,6 +162,23 @@ test, validation = train_test_split(test, test_size=0.5, random_state=42)
 train.to_csv(wd+'\\Data\\Cleaned\\Split\\train_sample.csv', index=False)
 test.to_csv(wd+'\\Data\\Cleaned\\Split\\test_sample.csv', index=False)
 validation.to_csv(wd+'\\Data\\Cleaned\\Split\\validation_sample.csv', index=False)
+
+
+#%%
+
+##Save the sample as a test for the Electra Model
+
+reviews_df['Review_rating'] = reviews_df['Review_rating'] -1
+
+
+train, test = train_test_split(reviews_df, test_size=0.4, random_state=42)
+test, validation = train_test_split(test, test_size=0.5, random_state=42)
+
+train.to_csv(wd+'\\Data\\Cleaned\\Split\\train_all.csv', index=False)
+test.to_csv(wd+'\\Data\\Cleaned\\Split\\test_all.csv', index=False)
+validation.to_csv(wd+'\\Data\\Cleaned\\Split\\validation_all.csv', index=False)
+
+
 
 #%%
 
