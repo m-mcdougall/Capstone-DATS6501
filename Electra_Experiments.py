@@ -152,6 +152,7 @@ sample = reviews_df.sample(n=2000)
 #%%
 
 ##Save the sample as a test for the Electra Model
+# 60/20/20 Split
 
 sample['Review_rating'] = sample['Review_rating'] -1
 
@@ -166,7 +167,67 @@ validation.to_csv(wd+'\\Data\\Cleaned\\Split\\validation_sample.csv', index=Fals
 
 #%%
 
-##Save the sample as a test for the Electra Model
+## Check how it would look if only predict 4
+
+validation.Review_rating.plot.hist()
+
+from sklearn.metrics import accuracy_score
+
+
+# Calculate the F1 score.
+f1 = accuracy_score(y_true=validation["Review_rating"], y_pred=[4]*validation.shape[0])
+
+print('Accurancy if you always guess the most frequent rating (4)')
+print('\nF1: %.4f' % f1)
+
+
+#%%%
+
+# Check how often people's reviews and stays were on opposite sides of the pandemic
+
+
+print(f'Total differences between time of review and time of stay: {(reviews_df.Review_PrePandemic != reviews_df.Stay_PrePandemic).sum()}')
+print(f'Total reviews: {reviews_df.shape[0]}')
+print(f'Percent differences between time of review and time of stay: {100*(reviews_df.Review_PrePandemic != reviews_df.Stay_PrePandemic).sum()/reviews_df.shape[0]}%')
+
+# Less than 1% of reviews were written at a different Covid period than the stay
+
+# Excluding the time of review variable.
+
+#%%
+def add_features(df_in):
+    
+    df_in = df_in.copy()
+    #Filter for review_prepandemic col
+    boolean_filter = {True:'before', False:'after'}
+    
+    #Create additional text to add to the review
+    new_text = '.'+' This hotel is in '+df_in.State+'.'+ ' I stayed '+ df_in.Review_PrePandemic.map(boolean_filter) + ' the pandemic.'
+
+    df_in.Review_Body = df_in.Review_Body + new_text
+    
+    return df_in
+
+
+train_feature_add = add_features(train)
+test_feature_add = add_features(test)
+validation_feature_add = add_features(validation)
+
+
+train_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\train_features_sample.csv', index=False)
+test_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\test_features_sample.csv', index=False)
+validation_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\validation_features_sample.csv', index=False)
+
+#%%
+
+
+
+
+    
+
+#%%
+
+##Save the full dataset for the Electra Model
 
 reviews_df['Review_rating'] = reviews_df['Review_rating'] -1
 
