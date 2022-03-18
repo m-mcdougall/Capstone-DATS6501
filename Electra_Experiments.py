@@ -178,7 +178,7 @@ from sklearn.metrics import accuracy_score
 f1 = accuracy_score(y_true=validation["Review_rating"], y_pred=[4]*validation.shape[0])
 
 print('Accurancy if you always guess the most frequent rating (4)')
-print('\nF1: %.4f' % f1)
+print('Accuracy: %.4f' % f1)
 
 
 #%%%
@@ -256,9 +256,9 @@ model = AutoModelForSequenceClassification.from_pretrained("google/electra-base-
 
 
 #Load Data
-dataset = load_dataset('csv', data_files={'train': wd+'\\Data\\Cleaned\\Split\\train_sample.csv',
-                                          'test': wd+'\\Data\\Cleaned\\Split\\test_sample.csv',
-                                          'validation':wd+'\\Data\\Cleaned\\Split\\validation_sample.csv'})
+dataset = load_dataset('csv', data_files={'train': wd+'\\Data\\Cleaned\\Split\\train_features_sample.csv',
+                                          'test': wd+'\\Data\\Cleaned\\Split\\test_features_sample.csv',
+                                          'validation':wd+'\\Data\\Cleaned\\Split\\validation_features_sample.csv'})
 
 
 ###  Tokenize  ###
@@ -298,7 +298,7 @@ for batch in train_dataloader:
 
 
 ###  Set-up  ###
-num_epochs = 8
+num_epochs = 3
 checkpoint = "google/electra-base-discriminator"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
@@ -334,6 +334,9 @@ for epoch in range(num_epochs):
         lr_scheduler.step()
         optimizer.zero_grad()
         progress_bar.update(1)
+    
+    #Save at the end of each epoch
+    model.save_pretrained(wd+'//epoch_'+str(epoch)+'_features_model_save')
 
 ###  Evaluations  ###
 metric = load_metric("accuracy")
@@ -349,10 +352,19 @@ for batch in eval_dataloader:
 
 metric.compute()
 
+#%%
 
+#Test model Predictions
 
+sample_sentence = "This hotel could be cleaner. This hotel is in HI. I stayed before the pandemic."
 
+input_ids = torch.tensor(tokenizer.encode(sample_sentence, add_special_tokens=True)).unsqueeze(0)  # Batch size 1
+scores = model(input_ids)[0]
+print(scores)
 
+#Print the predicted score
+prediction = torch.argmax(model(input_ids).logits, dim=-1)
+print(prediction)
 
 
 
