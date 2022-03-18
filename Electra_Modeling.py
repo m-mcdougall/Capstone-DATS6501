@@ -1,25 +1,11 @@
 # -*- coding: utf-8 -*-
 
+
 #Non-Specific Imports
 import os
-import re
 import pandas as pd
-import numpy as np
-import time
-import concurrent.futures as cf
 from tqdm import tqdm
-import math
 
-
-#Plotting Imports
-import matplotlib.pyplot as plt
-from  matplotlib.ticker import FuncFormatter
-import seaborn as sns
-
-
-#NLP Imports
-import nltk
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 #Modeling Imports
@@ -154,18 +140,14 @@ sample = reviews_df.sample(n=2000)
 ##Save the sample as a test for the Electra Model
 # 60/20/20 Split
 
-sample['Review_rating'] = sample['Review_rating'] -1
+reviews_df['Review_rating'] = reviews_df['Review_rating'] -1
 
 
-train, test = train_test_split(sample, test_size=0.4, random_state=42)
+train, test = train_test_split(reviews_df, test_size=0.4, random_state=42)
 test, validation = train_test_split(test, test_size=0.5, random_state=42)
 
-train.to_csv(wd+'\\Data\\Cleaned\\Split\\train_sample.csv', index=False)
-test.to_csv(wd+'\\Data\\Cleaned\\Split\\test_sample.csv', index=False)
-validation.to_csv(wd+'\\Data\\Cleaned\\Split\\validation_sample.csv', index=False)
-
-
 #%%
+
 
 ## Check how it would look if only predict 4
 
@@ -181,6 +163,9 @@ print('Accurancy if you always guess the most frequent rating (4)')
 print('Accuracy: %.4f' % f1)
 
 
+#Accurancy if you always guess the most frequent rating (4)
+#Accuracy: 0.5012
+
 #%%%
 
 # Check how often people's reviews and stays were on opposite sides of the pandemic
@@ -193,6 +178,10 @@ print(f'Percent differences between time of review and time of stay: {100*(revie
 # Less than 1% of reviews were written at a different Covid period than the stay
 
 # Excluding the time of review variable.
+
+#Total differences between time of review and time of stay: 8193
+#Total reviews: 3774238
+#Percent differences between time of review and time of stay: 0.21707693049563911%
 
 #%%
 def add_features(df_in):
@@ -214,81 +203,15 @@ test_feature_add = add_features(test)
 validation_feature_add = add_features(validation)
 
 
-train_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\train_features_sample.csv', index=False)
-test_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\test_features_sample.csv', index=False)
-validation_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\validation_features_sample.csv', index=False)
+train_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\all_data_train_features.csv', index=False)
+test_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\all_data_test_features.csv', index=False)
+validation_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\all_data_validation_features.csv', index=False)
 
 #%%
 
-
-
-
-    
-
-#%%
-
-##Save the full dataset for the Electra Model
-
-reviews_df['Review_rating'] = reviews_df['Review_rating'] -1
-
-
-train, test = train_test_split(reviews_df, test_size=0.4, random_state=42)
-test, validation = train_test_split(test, test_size=0.5, random_state=42)
-
-train.to_csv(wd+'\\Data\\Cleaned\\Split\\train_all.csv', index=False)
-test.to_csv(wd+'\\Data\\Cleaned\\Split\\test_all.csv', index=False)
-validation.to_csv(wd+'\\Data\\Cleaned\\Split\\validation_all.csv', index=False)
-
-
-
-#%%
-
-
-################################
-#
-#  Subsample the data 
-#  Equal samples from each state
-#  Sample size: 8000
-#
-################################
-
-collect_sampler = []
-
-
-for state in tqdm(reviews_df.State.unique()):
-    subset_state = (reviews_df[reviews_df.State == state]).sample(n=8000, replace=False)
-    collect_sampler.append(subset_state)
-
-
-
-collect_sampler = pd.concat(collect_sampler)
-
-#Adjust so the ratings start at 0
-collect_sampler['Review_rating'] = collect_sampler['Review_rating'] -1
-
-#Split into train, test and validation
-train, test = train_test_split(collect_sampler, test_size=0.4, random_state=42)
-test, validation = train_test_split(test, test_size=0.5, random_state=42)
-
-#%%
-
-#Add the features
-train_feature_add = add_features(train)
-test_feature_add = add_features(test)
-validation_feature_add = add_features(validation)
-
-#Save the sampled data
-train_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\sampled_data_train_features.csv', index=False)
-test_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\sampled_data_test_features.csv', index=False)
-validation_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\sampled_data_validation_features.csv', index=False)
-
-
-
-
-
-
-
-#%%
+import gc
+gc.collect()
+torch.cuda.empty_cache()
 
 ################################
 #
@@ -303,10 +226,19 @@ model = AutoModelForSequenceClassification.from_pretrained("google/electra-base-
 
 
 #Load Data
-dataset = load_dataset('csv', data_files={'train': wd+'\\Data\\Cleaned\\Split\\train_features_sample.csv',
-                                          'test': wd+'\\Data\\Cleaned\\Split\\test_features_sample.csv',
-                                          'validation':wd+'\\Data\\Cleaned\\Split\\validation_features_sample.csv'})
+#dataset = load_dataset('csv', data_files={'train': wd+'\\Data\\Cleaned\\Split\\all_data_train_features.csv',
+#                                          'test': wd+'\\Data\\Cleaned\\Split\\all_data_test_features.csv',
+#                                          'validation':wd+'\\Data\\Cleaned\\Split\\all_data_validation_features.csv'})
 
+#dataset = load_dataset('csv', data_files={'train': wd+'\\Data\\Cleaned\\Split\\all_data_train_features.csv',
+#                                          'validation':wd+'\\Data\\Cleaned\\Split\\all_data_validation_features.csv'})
+
+
+dataset = load_dataset('csv', data_files={'train': wd+'\\Data\\Cleaned\\Split\\sampled_data_train_features.csv',
+                                          'validation':wd+'\\Data\\Cleaned\\Split\\sampled_data_validation_features.csv'})
+
+
+torch.cuda.empty_cache()
 
 ###  Tokenize  ###
 def tokenize_function(example):
@@ -331,21 +263,20 @@ tokenized_datasets["train"].column_names
 
 
 ###  Dataloader  ###
-train_dataloader = DataLoader(tokenized_datasets["train"],
-                              shuffle=True, batch_size=8, collate_fn=data_collator)
+train_dataloader = DataLoader(tokenized_datasets["train"], shuffle=True, 
+                             batch_size=6, collate_fn=data_collator)
 eval_dataloader = DataLoader(tokenized_datasets["validation"],
-                             batch_size=8, collate_fn=data_collator)
+                             batch_size=6, collate_fn=data_collator)
 
 
 for batch in train_dataloader:
     break
 
-#%%
 
 
 
 ###  Set-up  ###
-num_epochs = 5
+num_epochs = 3
 checkpoint = "google/electra-base-discriminator"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
@@ -362,9 +293,11 @@ lr_scheduler = get_scheduler( "linear", optimizer=optimizer,
                               num_warmup_steps=0, num_training_steps=num_training_steps)
 print(num_training_steps)
 
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+device = torch.device("cpu")
+#device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+print(f'\n\n    Device is:{device}\n----------------------\n\n')
 model.to(device)
-device
+
 
 #Tqdm
 progress_bar = tqdm(range(num_training_steps))
@@ -383,7 +316,7 @@ for epoch in range(num_epochs):
         progress_bar.update(1)
     
     #Save at the end of each epoch
-    model.save_pretrained(wd+'//models//epoch_'+str(epoch)+'_features_model_save')
+    model.save_pretrained(wd+'//models//epoch_'+str(epoch)+'_features_model_save_cpu')
 
 ###  Evaluations  ###
 metric = load_metric("accuracy")
@@ -412,28 +345,3 @@ print(scores)
 #Print the predicted score
 prediction = torch.argmax(model(input_ids).logits, dim=-1)
 print(prediction)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
