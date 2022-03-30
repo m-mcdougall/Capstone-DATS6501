@@ -134,7 +134,7 @@ del all_files, all_cities, city, hotels, hotels_file
 
 
 #Get the states 
-state_df = hotels_df.filter(['hotel_ID', 'State']).copy()
+state_df = hotels_df.filter(['hotel_ID', 'State', 'hotel_location_walk']).copy()
 
 #Merge the states into each review, for grouping.
 reviews_df = reviews_df.merge(state_df, on = 'hotel_ID')
@@ -145,7 +145,7 @@ reviews_df.drop(['hotel_ID'],axis=1, inplace=True)
 
 
 #Get a sample, because you canot open the full dataset
-sample = reviews_df.sample(n=2000)
+sample = reviews_df.sample(n=5000, random_state=42)
 
 
 
@@ -169,17 +169,18 @@ validation.to_csv(wd+'\\Data\\Cleaned\\Split\\validation_sample.csv', index=Fals
 
 ## Check how it would look if only predict 4
 
-validation.Review_rating.plot.hist()
+train.Review_rating.plot.hist()
 
 from sklearn.metrics import accuracy_score
 
 
 # Calculate the F1 score.
-f1 = accuracy_score(y_true=validation["Review_rating"], y_pred=[4]*validation.shape[0])
+f1 = accuracy_score(y_true=test["Review_rating"], y_pred=[4]*test.shape[0])
 
 print('Accurancy if you always guess the most frequent rating (4)')
 print('Accuracy: %.4f' % f1)
 
+#Accuracy f1: 0.4930
 
 #%%%
 
@@ -195,6 +196,22 @@ print(f'Percent differences between time of review and time of stay: {100*(revie
 # Excluding the time of review variable.
 
 #%%
+
+def walkability_str_gen(num):
+    if num <= 50:
+        
+        if num > 10:
+            walk_str= 'not very walkable.'
+        else:
+            walk_str= 'not walkable at all.'
+            
+    else: #Num score 50+
+        if num > 80: #most walkable
+            walk_str= 'very walkable.'
+        else:
+            walk_str= 'fairly walkable.'
+    return walk_str
+
 def add_features(df_in):
     
     df_in = df_in.copy()
@@ -202,7 +219,24 @@ def add_features(df_in):
     boolean_filter = {True:'before', False:'after'}
     
     #Create additional text to add to the review
-    new_text = '.'+' This hotel is in '+df_in.State+'.'+ ' I stayed '+ df_in.Review_PrePandemic.map(boolean_filter) + ' the pandemic.'
+    new_text = '.'+' This hotel is in '+df_in.State+'.'\
+    + ' I stayed '+ df_in.Review_PrePandemic.map(boolean_filter) + ' the pandemic.'\
+    + ' This hotel was ' + df_in.hotel_location_walk.map(walkability_str_gen)
+
+    df_in.Review_Body = df_in.Review_Body + new_text
+    
+    return df_in
+
+
+def add_features_no_walk(df_in):
+    
+    df_in = df_in.copy()
+    #Filter for review_prepandemic col
+    boolean_filter = {True:'before', False:'after'}
+    
+    #Create additional text to add to the review
+    new_text = '.'+' This hotel is in '+df_in.State+'.'\
+    + ' I stayed '+ df_in.Review_PrePandemic.map(boolean_filter) + ' the pandemic.'
 
     df_in.Review_Body = df_in.Review_Body + new_text
     
@@ -219,9 +253,6 @@ test_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\test_features_sample.csv', i
 validation_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\validation_features_sample.csv', index=False)
 
 #%%
-
-
-
 
     
 
@@ -256,7 +287,7 @@ collect_sampler = []
 
 
 for state in tqdm(reviews_df.State.unique()):
-    subset_state = (reviews_df[reviews_df.State == state]).sample(n=8000, replace=False)
+    subset_state = (reviews_df[reviews_df.State == state]).sample(n=2000, replace=False, random_state=42)
     collect_sampler.append(subset_state)
 
 
@@ -273,14 +304,14 @@ test, validation = train_test_split(test, test_size=0.5, random_state=42)
 #%%
 
 #Add the features
-train_feature_add = add_features(train)
-test_feature_add = add_features(test)
-validation_feature_add = add_features(validation)
+train_feature_add = add_features_no_walk(train)
+test_feature_add = add_features_no_walk(test)
+validation_feature_add = add_features_no_walk(validation)
 
 #Save the sampled data
-train_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\sampled_data_train_features.csv', index=False)
-test_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\sampled_data_test_features.csv', index=False)
-validation_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\sampled_data_validation_features.csv', index=False)
+train_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\sm_sampled_data_train_features.csv', index=False)
+test_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\sm_sampled_data_test_features.csv', index=False)
+validation_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\sm_sampled_data_validation_features.csv', index=False)
 
 
 
@@ -321,7 +352,7 @@ data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 tokenized_datasets = tokenized_datasets.remove_columns(["Review_Body"])
 
 #Note: Removing all non-text columns?
-tokenized_datasets = tokenized_datasets.remove_columns(['State',"Review_PrePandemic", 'Stay_PrePandemic'])
+tokenized_datasets = tokenized_datasets.remove_columns(['State',"Review_PrePandemic", 'Stay_PrePandemic', 'hotel_location_walk'])
 
 #Rename and reformat columns
 tokenized_datasets = tokenized_datasets.rename_column("Review_rating", "labels")
@@ -423,9 +454,12 @@ print(prediction)
 
 
 
+#cp ./models/epoch_0_features_model_save_cpu epoch_0_features_model_save_cpu
+#cp /notebooks/models/epoch_0_features_model_save_cpu /notebooks/epoch_0_features_model_save_cpu
 
 
-
+#model = AutoModelForSequenceClassification.from_pretrained("captest_epoch_4_features_model_save_cpu")
+#model = AutoModelForSequenceClassification.from_pretrained("/home/ec2-user/notebooks/models/captest_epoch_4_features_model_save_cpu/")
 
 
 

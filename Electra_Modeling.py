@@ -219,6 +219,10 @@ torch.cuda.empty_cache()
 #
 ################################
 
+#Model loading
+
+token_checkpoint = "google/electra-base-discriminator"
+model_checkpoint = "./models/epoch_0_features_model_save_cpu"
 
 #Load Electra - Model and tokenizer
 tokenizer = AutoTokenizer.from_pretrained("google/electra-base-discriminator")
@@ -253,7 +257,7 @@ data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 tokenized_datasets = tokenized_datasets.remove_columns(["Review_Body"])
 
 #Note: Removing all non-text columns?
-tokenized_datasets = tokenized_datasets.remove_columns(['State',"Review_PrePandemic", 'Stay_PrePandemic'])
+tokenized_datasets = tokenized_datasets.remove_columns(['State',"Review_PrePandemic", 'Stay_PrePandemic', 'hotel_location_walk'])
 
 #Rename and reformat columns
 tokenized_datasets = tokenized_datasets.rename_column("Review_rating", "labels")

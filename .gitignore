@@ -130,3 +130,5 @@ dmypy.json
 *.csv
 Data.zip
 *.pkl
+Models/
+Data/

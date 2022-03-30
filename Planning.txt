@@ -27,9 +27,35 @@ Midterm Stats
 
 -Average review per state
 
-
-
-
 #-------------------------
 
 To-Do
+---------------
+#Baselines
+Run baselines with larger sample
+Make a table comparing baselines
+
+
+#Feature importance
+Read through all features, highlight interesting ones
+Make a word cloud?
+
+
+#Extracting the values
+Make a sentiment grid of 20 sentiment-equivalent sentences for positive and negative
+Make a function that samples all sentiments for each sentence, state and walkability combo
+Save this into a grid
+
+
+#Visualization
+Be able to filter and sample the grid to see the differences by factor
+Make map plot for overall rating
+Use the highlighted features to show differences
+
+#Storytelling
+Talk about interpreting - how does a pool factor in to buisness decisions in various states?
+
+
+
+
+
