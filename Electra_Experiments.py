@@ -46,6 +46,23 @@ os.chdir(wd)
 
 #%%
 
+
+def add_features_no_walk(df_in):
+    
+    df_in = df_in.copy()
+    #Filter for review_prepandemic col
+    boolean_filter = {True:'before', False:'after'}
+    
+    #Create additional text to add to the review
+    new_text = '.'+' This hotel is in '+df_in.State+'.'\
+    + ' I stayed '+ df_in.Review_PrePandemic.map(boolean_filter) + ' the pandemic.'
+
+    df_in.Review_Body = df_in.Review_Body + new_text
+    
+    return df_in
+
+#%%
+
 # Import the city's Hotels and Reviews
 
 
@@ -277,9 +294,9 @@ validation.to_csv(wd+'\\Data\\Cleaned\\Split\\validation_all.csv', index=False)
 
 ################################
 #
-#  Subsample the data 
+#  Subsample the data- Small
 #  Equal samples from each state
-#  Sample size: 8000
+#  Sample size: 2000
 #
 ################################
 
@@ -301,7 +318,6 @@ collect_sampler['Review_rating'] = collect_sampler['Review_rating'] -1
 train, test = train_test_split(collect_sampler, test_size=0.4, random_state=42)
 test, validation = train_test_split(test, test_size=0.5, random_state=42)
 
-#%%
 
 #Add the features
 train_feature_add = add_features_no_walk(train)
@@ -312,6 +328,135 @@ validation_feature_add = add_features_no_walk(validation)
 train_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\sm_sampled_data_train_features.csv', index=False)
 test_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\sm_sampled_data_test_features.csv', index=False)
 validation_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\sm_sampled_data_validation_features.csv', index=False)
+
+#%%
+
+
+################################
+#
+#  Subsample the data- Medium
+#  Equal samples from each state
+#  Sample size: 5000
+#
+################################
+
+collect_sampler = []
+
+
+for state in tqdm(reviews_df.State.unique()):
+    subset_state = (reviews_df[reviews_df.State == state]).sample(n=5000, replace=False, random_state=42)
+    collect_sampler.append(subset_state)
+
+
+
+collect_sampler = pd.concat(collect_sampler)
+
+#Adjust so the ratings start at 0
+collect_sampler['Review_rating'] = collect_sampler['Review_rating'] -1
+
+#Split into train, test and validation
+train, test = train_test_split(collect_sampler, test_size=0.4, random_state=42)
+test, validation = train_test_split(test, test_size=0.5, random_state=42)
+
+
+#Add the features
+train_feature_add = add_features_no_walk(train)
+test_feature_add = add_features_no_walk(test)
+validation_feature_add = add_features_no_walk(validation)
+
+#Save the sampled data
+train_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\m_sampled_data_train_features.csv', index=False)
+test_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\m_sampled_data_test_features.csv', index=False)
+validation_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\m_sampled_data_validation_features.csv', index=False)
+
+#%%
+
+
+################################
+#
+#  Subsample the data- Medium - Stratifiied
+#  Equal samples from each state
+#  Sample size: 5000
+#
+################################
+
+collect_sampler = []
+
+
+
+for state in tqdm(reviews_df.State.unique()):
+    subset_state = (reviews_df[reviews_df.State == state])#.sample(n=5000, replace=False, random_state=42)
+    
+    #Stratify to ensure equal representation of all ratings
+    subset_state=subset_state.groupby('Review_rating').apply(lambda x: x.sample(n=500, replace=False, random_state=42))
+    collect_sampler.append(subset_state)
+
+#Total size = 127500
+
+collect_sampler = pd.concat(collect_sampler)
+
+#Adjust so the ratings start at 0
+collect_sampler['Review_rating'] = collect_sampler['Review_rating'] -1
+
+
+#Split into train, test and validation
+train, test = train_test_split(collect_sampler, test_size=0.4, random_state=42, stratify=collect_sampler.Review_rating)
+test, validation = train_test_split(test, test_size=0.5, random_state=42, stratify=test.Review_rating)
+
+
+#Add the features
+train_feature_add = add_features_no_walk(train)
+test_feature_add = add_features_no_walk(test)
+validation_feature_add = add_features_no_walk(validation)
+
+#Save the sampled data
+train_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\ms_sampled_data_train_features.csv', index=False)
+test_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\ms_sampled_data_test_features.csv', index=False)
+validation_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\ms_sampled_data_validation_features.csv', index=False)
+
+#All calss weightings the same now
+#Accurancy if you always guess 4
+#Accuracy: 0.2000
+
+#%%
+
+
+################################
+#
+#  Subsample the data- large
+#  Equal samples from each state
+#  Sample size: 8000
+#
+################################
+
+collect_sampler = []
+
+
+for state in tqdm(reviews_df.State.unique()):
+    subset_state = (reviews_df[reviews_df.State == state]).sample(n=8000, replace=False, random_state=42)
+    collect_sampler.append(subset_state)
+
+
+
+collect_sampler = pd.concat(collect_sampler)
+
+#Adjust so the ratings start at 0
+collect_sampler['Review_rating'] = collect_sampler['Review_rating'] -1
+
+#Split into train, test and validation
+train, test = train_test_split(collect_sampler, test_size=0.4, random_state=42)
+test, validation = train_test_split(test, test_size=0.5, random_state=42)
+
+
+#Add the features
+train_feature_add = add_features_no_walk(train)
+test_feature_add = add_features_no_walk(test)
+validation_feature_add = add_features_no_walk(validation)
+
+#Save the sampled data
+train_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\lg_sampled_data_train_features.csv', index=False)
+test_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\lg_sampled_data_test_features.csv', index=False)
+validation_feature_add.to_csv(wd+'\\Data\\Cleaned\\Split\\lg_sampled_data_validation_features.csv', index=False)
 
 
 
