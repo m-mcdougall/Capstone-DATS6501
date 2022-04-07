@@ -32,7 +32,8 @@ from transformers import AutoModelForSequenceClassification
 from transformers import get_scheduler
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
-
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import accuracy_score
 
 
 #Flatten list utility function
@@ -429,8 +430,8 @@ def baseline_model_electa_test(save_name):
         logits = outputs.logits
         predictions = torch.argmax(logits, dim=-1)
         metric.add_batch(predictions=predictions, references=batch["labels"])
-        pred.append(predictions)
-        true.append(batch["labels"])
+        pred.append(predictions.cpu().numpy())
+        true.append(batch["labels"].cpu().numpy())
     
     print('Validation Accuracy:')
     print(metric.compute())
@@ -870,6 +871,64 @@ for batch in eval_dataloader:
 
 print('Validation Accuracy:')
 print(metric.compute())
+
+#%%
+
+#######
+#
+# Batch testing the baselines for MSE
+#
+#######
+
+def model_output_cleaner(data_in, col_name):
+    
+    predictions = pd.DataFrame(data_in)
+    pred_melt = predictions.T.melt()
+    pred_melt = pred_melt.drop('variable', axis=1)
+    pred_melt = pred_melt.rename({'value':col_name}, axis=1)
+    pred_melt[col_name] = pred_melt[col_name]+1
+
+    return pred_melt
+
+
+#Running all baselines
+collector_mse = {}
+collector_acc = {}
+problems = []
+
+#for model_name in ['basic_s', 'pandemic_s','pandemic','pandemic_state_s', 'pandemic_state_walk_s','walk_only_s','state_only', 'state_only_s','just_state_walk','just_state_walk_s',]:   
+for model_name in ['pandemic','pandemic_state_s', 'pandemic_state_walk_s','walk_only_s','state_only', 'state_only_s','just_state_walk','just_state_walk_s',]:
+    
+    try:
+        baseline_metric, baseline_true = baseline_model_electa_test(save_name = model_name)
+        
+        base_metric = model_output_cleaner(baseline_metric, 'Baseline').dropna(axis=0)
+        base_true = model_output_cleaner(baseline_true, 'True').dropna(axis=0)
+        
+        mse_score = mean_squared_error(base_metric, base_true)
+        collector_mse[model_name] = mse_score
+        
+        acc_score = accuracy_score(base_metric, base_true)
+        collector_acc[model_name] = acc_score
+        
+        print(f'\n\n------------------\n\n {model_name} MSE:{mse_score}\n {model_name} ACC:{acc_score}\n\n--------------\n')
+    except:
+        problems.append(model_name)
+    
+        print(f'\n\n------------------\n\n {model_name} is a problem! \n\n--------------\n')
+
+print(problems)
+#%%
+
+
+
+
+
+
+
+
+
+
 
 
 
