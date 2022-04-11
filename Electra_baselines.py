@@ -536,13 +536,13 @@ print([metric.numpy() for metric in baseline_metric])
 def walkability_str_gen(num):
     if num <= 50:
         
-        if num > 10:
+        if num > 25:
             walk_str= 'not very walkable.'
         else:
             walk_str= 'not walkable at all.'
             
     else: #Num score 50+
-        if num > 80: #most walkable
+        if num > 75: #most walkable
             walk_str= 'very walkable.'
         else:
             walk_str= 'fairly walkable.'

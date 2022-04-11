@@ -62,7 +62,8 @@ os.chdir(wd)
 
 
 features = pd.read_csv(wd+'\\Data\\Features\\Sentences\\feature_sentence_matrix.csv', index_col=0)
-predictions = pd.read_csv(wd+'\\Data\\Features\\Results\\ensemble_predictions.csv',index_col=0)
+#predictions = pd.read_csv(wd+'\\Data\\Features\\Results\\ensemble_predictions.csv',index_col=0)
+predictions = pd.read_csv(wd+'\\Data\\Features\\Results\\ernie_feature_predictions.csv',index_col=0, header=None)
 
 
 #Join features and predictions
@@ -122,7 +123,7 @@ all_features = feature_val_overall.reset_index()
 
 tfidf = pd.read_csv(wd+'\\Data\\Tfidf\\All_reviews.csv', index_col=0)
 
-tfidf = tfidf.iloc[:10, :]
+tfidf = tfidf.iloc[:15, :]
 tfidf = tfidf.rename({'Features':'Feature'}, axis=1)
 
 filtered_caring = pd.merge(tfidf,all_features, on=['Feature'], how='left')
@@ -140,7 +141,49 @@ sns.catplot(data=filtered_caring, y='Prediction', x='Feature',
 
 plt.ylabel("Predicted Rating")
 plt.ylim(1,5)
+plt.title('Mean Predicted Top 15 Tfidf Features Ratings')
 plt.show()
+
+#%%
+
+
+# Try to make a dot text plot for just the basic scores 
+
+all_features = feature_val_overall.reset_index()
+
+
+tfidf = pd.read_csv(wd+'\\Data\\Tfidf\\All_reviews.csv', index_col=0)
+
+tfidf = tfidf.iloc[:100, :]
+tfidf = tfidf.rename({'Features':'Feature'}, axis=1)
+tfidf = tfidf.drop('TFIDF', axis=1)
+
+filtered_caring = pd.merge(tfidf,all_features, on=['Feature'], how='left')
+filtered_caring = filtered_caring.set_index(['Feature','Sentiment' ]).unstack().reset_index()
+filtered_caring.columns = filtered_caring.columns.droplevel()
+filtered_caring = filtered_caring.rename({'':'Feature'}, axis=1)
+
+
+fig = plt.figure(figsize=(12, 6))
+
+for word in filtered_caring.Feature.unique():
+    filt_df=filtered_caring[filtered_caring.Feature == word]
+    plt.scatter(filt_df['NEGATIVE'], filt_df['POSITIVE'], marker='.', color='red')
+    plt.text(filt_df['NEGATIVE']+.005, filt_df['POSITIVE']-.005, word, fontsize=9)
+
+
+
+plt.xlim(1.5, 4.5)
+plt.ylim(3.5, 5)
+
+plt.xlabel('Mean Predicted Rating in Negative Context')
+plt.ylabel('Mean Predicted Rating in Positive Context')
+
+#plt.hlines(0, -1.5, 1.5)
+plt.vlines(0, -1.5, 1.5)
+
+plt.show()
+
 
 #%%
 
@@ -189,6 +232,7 @@ sns.catplot(data=filtered_caring, y='Prediction', x='Feature',
 
 plt.ylabel("Predicted Rating")
 plt.ylim(1,5)
+plt.title('Changes in Top 15 Tfidf Features Ratings\nPre vs Pandemic Predicted Ratings')
 plt.show()
 
 
@@ -213,7 +257,7 @@ plot_pandemic=plot_pandemic.reset_index()
 
 tfidf = pd.read_csv(wd+'\\Data\\Tfidf\\All_reviews.csv', index_col=0)
 
-tfidf = tfidf.iloc[:25, :]
+tfidf = tfidf.iloc[:15, :]
 tfidf = tfidf.rename({'Features':'Feature'}, axis=1)
 
 filtered_caring = pd.merge(tfidf,plot_pandemic, on=['Feature'], how='left')
@@ -227,16 +271,62 @@ fig = plt.figure(figsize=(14, 6))
 sns.catplot(data=filtered_caring, y='Prediction', x='Feature', 
             hue='Sentiment', hue_order=hue_order, palette=hue_colors,
             kind='swarm', s=8,
-            height = 5, aspect=3,)
+            height = 5, aspect=2,)
 
 plt.hlines(0,-100, 100, linestyles='dotted', colors='black', linewidths=1)
 
-
+plt.title('Changes in Top 15 Tfidf Features Ratings\nPre vs Pandemic Predicted Ratings')
 plt.ylabel("Change in Predicted Rating")
 plt.ylim(-1,1)
 plt.show()
 
 
+#%%
+
+
+feature_val_pand_before_plot = feature_val_pand_before.copy()
+feature_val_pand_after_plot = feature_val_pand_after.copy()
+
+
+plot_pandemic= feature_val_pand_after_plot-feature_val_pand_before_plot
+plot_pandemic=plot_pandemic.reset_index()
+
+
+tfidf = pd.read_csv(wd+'\\Data\\Tfidf\\All_reviews.csv', index_col=0)
+
+tfidf = tfidf.iloc[:50, :]
+tfidf = tfidf.rename({'Features':'Feature'}, axis=1)
+tfidf = tfidf.drop('TFIDF', axis=1)
+
+filtered_caring = pd.merge(tfidf,plot_pandemic, on=['Feature'], how='left')
+filtered_caring = filtered_caring.set_index(['Feature','Sentiment' ]).unstack().reset_index()
+filtered_caring.columns = filtered_caring.columns.droplevel()
+filtered_caring = filtered_caring.rename({'':'Feature'}, axis=1)
+
+
+fig = plt.figure(figsize=(14, 6))
+
+for word in filtered_caring.Feature.unique():
+    filt_df=filtered_caring[filtered_caring.Feature == word]
+    plt.scatter(filt_df['NEGATIVE'], filt_df['POSITIVE'], marker='.', color='red')
+    plt.text(filt_df['NEGATIVE']+.005, filt_df['POSITIVE']-.005, word, fontsize=9)
+
+bounds = 0.4
+
+#plt.xlim(-0.3, 0.3)
+#plt.ylim(0, bounds)
+
+plt.hlines(0, -1.5, 1.5)
+plt.vlines(0, -1.5, 1.5)
+
+plt.show()
+#%%
+
+check = plot_pandemic.set_index(['Feature','Sentiment' ]).unstack().reset_index()
+check.columns = check.columns.droplevel()
+
+check['delta_NEGATIVE'] = check['POST_NEGATIVE'] - check['PRE_NEGATIVE']
+check['delta_POSITIVE'] = check['POST_POSITIVE'] - check['PRE_POSITIVE']
 
 #%%
 ##
@@ -331,7 +421,7 @@ neg = neg.sort_values(by='Difference', axis=0, ascending=False).reset_index(drop
 
 
 
-focus_word = 'new'#neg.Feature.iloc[0]
+focus_word = 'airport'#neg.Feature.iloc[0]
 sentiment = 'NEGATIVE'
 #sentiment = 'POSITIVE'
 
@@ -386,7 +476,7 @@ for ax in [ax_us, ax_ak, ax_hi]:
 
 
 #Add Title
-title_str='Average Review Score Scraped per State\nMost Populous City in each State Scraped'
+title_str='Mean Predicted Review Score per State\nTfidf Feature: '+focus_word.capitalize()+', '+sentiment.capitalize()+' Context'
 ax_us.set_title(title_str, fontsize=15)
 
 
@@ -442,7 +532,7 @@ c_map_ax = fig.add_axes([0.91, 0.33, 0.01, 0.36])
 c_map_ax.axes.get_xaxis().set_visible(False)
 #c_map_ax.axes.get_yaxis().set_visible(False)
 cbar = matplotlib.colorbar.ColorbarBase(c_map_ax, cmap=cm.jet_r, orientation = 'vertical', ticks=[0, 0.5, 1])
-cbar.ax.set_yticklabels(['3 Stars', '4 Stars', '5 Stars'])
+cbar.ax.set_yticklabels(['1 Stars', '3 Stars', '5 Stars'])
 
 plt.show()
 
@@ -485,7 +575,7 @@ neg = neg.sort_values(by='Difference', axis=0, ascending=False).reset_index(drop
 
 #%%
 
-focus_word = 'staff'#neg.Feature.iloc[0]
+focus_word = 'pool'#neg.Feature.iloc[0]
 sentiment = 'NEGATIVE'
 sentiment = 'POSITIVE'
 
@@ -540,7 +630,7 @@ for ax in [ax_us, ax_ak, ax_hi]:
 
 
 #Add Title
-title_str='Average Review Score Scraped per State\nMost Populous City in each State Scraped'
+title_str='Difference in Predicted Review Stars per State\nFeature: '+focus_word.upper()+" with a "+sentiment.upper()+' Context'
 ax_us.set_title(title_str, fontsize=15)
 
 

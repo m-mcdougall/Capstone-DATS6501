@@ -104,8 +104,8 @@ collector_neg = collector_neg[collector_neg['Sentiment'] !='POSITIVE']
 
 # Sample the words to select our sentiment sample
 
-sample_pos = collector_pos.sample(n=25, replace=False, random_state=42)
-sample_neg =collector_neg.sample(n=25, replace=False, random_state=42)
+sample_pos = collector_pos.sample(n=20, replace=False, random_state=42)
+sample_neg =collector_neg.sample(n=20, replace=False, random_state=42)
 
 sample_sentiment = pd.concat([sample_pos,sample_neg])
 sample_sentiment.reset_index(drop=True, inplace=True)
@@ -160,14 +160,6 @@ del new, hotels_df
 
 #%%
 
-#Load the model
-
-checkpoint = 'epoch_2_features_model_save_sample2000'
-
-#Load Electra - Model and tokenizer
-tokenizer = AutoTokenizer.from_pretrained("google/electra-base-discriminator")
-model = AutoModelForSequenceClassification.from_pretrained(wd+'\\Models\\'+checkpoint)
-
 #%%
 
 #Get all features
@@ -195,21 +187,24 @@ all_features = all_reviews.Features.unique()
 big_collect=[]
 
 for feature in tqdm(all_features):
-    for pand_status in ['before', 'after']:
+    for pand_status in ['Before', 'After']:
         for state in states:
-            for i in range(sample_sentiment.shape[0]):
-                
-                word = sample_sentiment.iloc[i].Word
-                sentiment = sample_sentiment.iloc[i].Sentiment
-                
-                sample_sentence = 'The '+feature.strip()+' was '+word.strip()+'.'+' This hotel is in '+state+'.'\
-                    + ' I stayed '+ pand_status + ' the pandemic.'
-        
-                big_collect.append([sample_sentence, feature, word, sentiment, state, pand_status])
+            for walkability in range(4):
+                for i in range(sample_sentiment.shape[0]):
+                    
+                    word = sample_sentiment.iloc[i].Word
+                    sentiment = sample_sentiment.iloc[i].Sentiment
+                    
+                    sample_sentence = 'State '+ state + '. '+ pand_status + ' pandemic.'\
+                        +'Walkability '+ str(walkability) +'. '\
+                        +feature.strip().capitalize()+' '+word.strip().lower()+'.'
+                    
             
+                    big_collect.append([sample_sentence, feature, word, sentiment, state, pand_status])
+                
 
 big_collect = pd.DataFrame(big_collect, columns = ['Sentence', 'Feature', 'Word', 'Sentiment', 'State', 'Pandemic_Timing'])
-big_collect.to_csv(wd+'\\Data\\Features\\Sentences\\feature_sentence_matrix.csv', index=True)
+big_collect.to_csv(wd+'\\Data\\Features\\Sentences\\reorder_feature_sentence_matrix.csv', index=True)
 
 
 
@@ -411,120 +406,3 @@ def model_ernie_feature_extract(save_name, checkpoint_in):
 
 
     return pred
-#%%
-
-# Generate the predicted values
-#Note: Do this on gpu, very slow on cpu
-
-predictions = model_electa_feature_extract(save_name='test_sample_1', checkpoint_in='epoch_0_features_model_save_sample2000_5epoch')
-
-import csv 
-with open(wd+'\\Data\\Features\\Results\\predictions.csv', 'w') as f: 
-    write = csv.writer(f) 
-    write.writerows(predictions) 
-    
-    
-#%%
-predictions = model_ernie_feature_extract(save_name='test_sample_ernie', checkpoint_in='test_baselines_reordered_pandemic_state')
-
-import csv 
-with open(wd+'\\Data\\Features\\Results\\ernie_feature_predictions.csv', 'w') as f: 
-    write = csv.writer(f) 
-    write.writerows(predictions) 
-    
-
-
-#%%
-
-##############
-#
-#  Load in the features and predictions
-#
-##############
-
-
-features = pd.read_csv(wd+'\\Data\\Features\\Sentences\\feature_sentence_matrix.csv', index_col=0)
-predictions = pd.read_csv(wd+'\\Data\\Features\\Results\\predictions.csv',header=None)
-
-
-#Clean the predictions
-pred_melt = predictions.T.melt()
-pred_melt = pred_melt.drop('variable', axis=1)
-pred_melt = pred_melt.rename({'value':'Prediction'}, axis=1)
-pred_melt['Prediction'] = pred_melt['Prediction']+1
-
-#Join features and predictions
-features = features.join(pred_melt)
-
-
-
-#%%
-
-
-# Now time to groupby for analysis
-feature_val_overall=features.groupby(['Feature', 'Sentiment'])['Prediction'].mean()
-
-feature_val_state = features.groupby(['Feature','State', 'Sentiment'])['Prediction'].mean()
-feature_val_pand = features.groupby([ 'Feature','Pandemic_Timing','Sentiment'])['Prediction'].mean()
-
-
-#%%
-
-
-
-#Show the change from the mean for each state
-delta_state = feature_val_state - feature_val_overall
-#delta_pand = feature_val_pand - feature_val_overall
-
-
-
-feature_val_pand_before = features[features.Pandemic_Timing == 'before']
-feature_val_pand_after = features[features.Pandemic_Timing == 'after']
-feature_val_pand_after = feature_val_pand_after.groupby([ 'Feature','Sentiment'])['Prediction'].mean()
-feature_val_pand_before = feature_val_pand_before.groupby([ 'Feature','Sentiment'])['Prediction'].mean()
-
-feature_val_pand = feature_val_pand_before - feature_val_pand_after
-
-
-#%%
-
-#Convert to change in strength of caring
-
-pand_caring = feature_val_pand.reset_index()
-
-care_more = pand_caring[((pand_caring.Sentiment =='POSITIVE')&(pand_caring.Prediction >0) ) |  ((pand_caring.Sentiment =='NEGATIVE')&(pand_caring.Prediction <-0) )]
-care_less= pand_caring[((pand_caring.Sentiment =='NEGATIVE')&(pand_caring.Prediction >0) ) |  ((pand_caring.Sentiment =='POSITIVE')&(pand_caring.Prediction <-0) )]
-care_same = pand_caring[pand_caring.Prediction == 0]
-
-
-care_more['Prediction'] = care_more['Prediction'].apply(lambda x: abs(x))
-care_less['Prediction'] = care_less['Prediction'].apply(lambda x: abs(x)*-1.0)
-
-
-caring = pd.concat([care_more, care_less, care_same])
-
-
-
-#%%
-x2 = feature_val_pand.reset_index()
-x2 = x2.sort_values('Prediction')
-x2 = x2[((x2.Sentiment =='POSITIVE')&(x2.Prediction >0) ) |  ((x2.Sentiment =='NEGATIVE')&(x2.Prediction <-0) )]
-
-
-
-fig = plt.figure(figsize=(14, 6))
-sns.catplot(data=x2, y='Prediction', x='Feature', hue='Sentiment', kind='bar',
-            height = 5, aspect=3,)
-plt.show()
-
-
-
-#%%
-
-all_feats = features.Feature.unique()
-
-
-
-
-
-
