@@ -160,6 +160,21 @@ del new, hotels_df
 
 #%%
 
+#Get all features
+
+pand_only_reviews=[]
+
+for file in ['PostPandemic_reviews.csv','PrePandemic_reviews.csv']:
+    #Extract only the top 100 features for each list
+    pand_only_reviews.append(pd.read_csv(wd+'\\Data\\Tfidf\\'+file, index_col=0).iloc[0:100, :])
+
+pand_only_reviews = pd.concat(pand_only_reviews, ignore_index=True)
+
+#Get the unique values, so we don't repeat
+pand_only_reviews = pand_only_reviews.Features.unique()
+
+
+
 #%%
 
 #Get all features
@@ -174,7 +189,13 @@ all_reviews = pd.concat(all_reviews, ignore_index=True)
 
 #Get the unique values, so we don't repeat
 all_features = all_reviews.Features.unique()
+#%%
 
+for item in pand_only_reviews:
+    if item not in all_features:
+        print(item)
+
+# These are the same - So no need to use All_reviews.csv.
 
 #%%
 

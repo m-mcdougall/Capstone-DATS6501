@@ -478,11 +478,11 @@ validation_done = add_all_features(validation, save_name='validation')
 
 
 
+#%%
 
 
 
-
-
+train.groupby('Review_PrePandemic').count()
 
 
 
