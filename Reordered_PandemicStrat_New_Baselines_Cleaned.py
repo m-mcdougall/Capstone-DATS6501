@@ -459,7 +459,8 @@ for state in tqdm(reviews_df.State.unique()):
     except:
         pre = subset_state[subset_state.Review_PrePandemic == True].sample(1500, replace=False, random_state=42)
         post = subset_state[subset_state.Review_PrePandemic == False]
-        print(f'{state}: Post is only {post.shape[0]}')
+        #print(f'\n{state}: Post is only {post.shape[0]}')
+        print(f'\n{state}: Pre-Pand: {subset_state[subset_state.Review_PrePandemic == True].shape[0]}, post:{post.shape[0]}')
         collect_sampler.append(pre)
         collect_sampler.append(post)
 
@@ -497,4 +498,16 @@ train_done = add_all_features(train, save_name='train')
 test_done = add_all_features(test, save_name='test')
 validation_done = add_all_features(validation, save_name='validation')
 
+#%%
+
+
+dif_rating_count_pand = train.groupby(['Review_PrePandemic','Review_rating']).count().reset_index()
+dif_rating_count_pand.Review_rating = dif_rating_count_pand.Review_rating +1
+sns.catplot(kind='bar', data = dif_rating_count_pand, x='Review_rating', y='State',
+            hue='Review_PrePandemic', hue_order = [True, False], )
+
+plt.xlabel('Review Rating')
+plt.ylabel('Number of Reviews')
+
+plt.show()
 

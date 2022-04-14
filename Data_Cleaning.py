@@ -408,7 +408,21 @@ city_id = 'g60982'
 issues_copy = ['g45963', 'g60805']
 
 
+#%%
 
+sentence = 'I was sleeping like a log - The pillowss were so soft!1!'
+
+## Tokenize and parse the Reviews
+x = custom_tokenizer(sentence)
+print(x)
+x = remove_stops(x)
+print(x)
+x = custom_lemmatizer(x)
+print(x)
+x = number_remover(x)
+print(x)
+x = remove_punct(x)
+print(x)
 
 
 
