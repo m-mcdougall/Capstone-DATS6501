@@ -169,9 +169,20 @@ for state in tqdm(reviews_df.State.unique()):
     
     #subset_state = (reviews_df[reviews_df.State == state]).sample(n=1000, replace=False, random_state=42)
     subset_state = (reviews_df[reviews_df.State == state])
-    subset_state.groupby('Grade', group_keys=False).apply(lambda x: x.sample(1500, replace=False, random_state=42))
-    collect_sampler.append(subset_state)
-
+    try:
+        
+        post = subset_state[subset_state.Review_PrePandemic == False].sample(500, replace=False, random_state=42)
+        pre = subset_state[subset_state.Review_PrePandemic == True].sample(500, replace=False, random_state=42)
+        #print(f'{state}: Post is only {post.shape[0]}')
+        collect_sampler.append(pre)
+        collect_sampler.append(post)
+    except:
+        pre = subset_state[subset_state.Review_PrePandemic == True].sample(500, replace=False, random_state=42)
+        post = subset_state[subset_state.Review_PrePandemic == False]
+        #print(f'\n{state}: Post is only {post.shape[0]}')
+        print(f'\n{state}: Pre-Pand: {subset_state[subset_state.Review_PrePandemic == True].shape[0]}, post:{post.shape[0]}')
+        collect_sampler.append(pre)
+        collect_sampler.append(post)
 
 
 collect_sampler = pd.concat(collect_sampler)
@@ -320,10 +331,10 @@ def add_pandemic(df_in):
 
 def save_samples(baseline_save, train_in, test_in):
     train_in=train_in.filter(['Review_Body', 'Review_rating'], axis=1)
-    train_in.to_csv(wd+'\\Data\\Cleaned\\Split\\New_baselines\\new_min'+baseline_save+'_train.csv')
+    train_in.to_csv(wd+'\\Data\\Cleaned\\Split\\New_baselines\\pand_min'+baseline_save+'_train.csv')
                     
     test_in=test_in.filter(['Review_Body', 'Review_rating'], axis=1)
-    test_in.to_csv(wd+'\\Data\\Cleaned\\Split\\New_baselines\\new_min'+baseline_save+'_test.csv')
+    test_in.to_csv(wd+'\\Data\\Cleaned\\Split\\New_baselines\\pand_min'+baseline_save+'_test.csv')
     
 
 baseline = 'review_only'

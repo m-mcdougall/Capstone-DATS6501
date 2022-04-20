@@ -110,6 +110,7 @@ all_features = feature_val_overall.reset_index()
 
 tfidf = pd.read_csv(wd+'\\Data\\Tfidf\\All_reviews.csv', index_col=0)
 
+
 tfidf = tfidf.iloc[:15, :]
 tfidf = tfidf.rename({'Features':'Feature'}, axis=1)
 
@@ -130,6 +131,9 @@ plt.ylabel("Predicted Rating")
 plt.ylim(1,5)
 plt.title('Mean Predicted Top 15 Tfidf Features Ratings')
 plt.show()
+
+
+
 
 #%%
  
@@ -163,6 +167,35 @@ plt.ylim(1,5)
 plt.yticks(np.arange(0, 5)+1, 1)
 
 plt.show()
+#%%
+
+#Boxplot of all predicted ratings
+
+all_features = feature_val_overall.reset_index()
+
+
+tfidf = pd.read_csv(wd+'\\Data\\Tfidf\\All_reviews.csv', index_col=0)
+
+tfidf = tfidf.iloc[:118, :]
+#tfidf = tfidf.iloc[:15, :]
+tfidf = tfidf.rename({'Features':'Feature'}, axis=1)
+
+filtered_caring = pd.merge(tfidf,all_features, on=['Feature'], how='left')
+
+hue_order = ['NEGATIVE', 'POSITIVE', ]
+hue_colors = ['#6065CC','#65CC60']
+
+fig = plt.figure(figsize=(6, 6))
+sns.boxplot(data =filtered_caring, x='Sentiment', y='Prediction', 
+            palette=hue_colors,)
+
+
+
+plt.ylabel("Predicted Rating")
+plt.ylim(1,5.3)
+plt.title('Mean Predicted Tfidf Features Ratings by Sentiment')
+plt.show()
+
 
 #%%
 
