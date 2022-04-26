@@ -11,7 +11,7 @@ All hotel review data were scraped from Trip Advisor, a popular hotel and travel
 ## Code Location
 
 All scripts to run this project are located in the Scripts directory of the Git repositiory.  
-Scipts to be run in Google Colab are located in Scripts/Colab Scripts.  
+Scripts to be run in Google Colab are located in Scripts/Colab Scripts/.  
 Archived code has been relocated to the Archives directory.
 
 ## Data
